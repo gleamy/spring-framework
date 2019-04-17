@@ -5,8 +5,8 @@
     xmlns:xi="http://www.w3.org/2001/XInclude"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="
-        http://docbook.org/ns/docbook http://www.docbook.org/xml/5.0/xsd/docbook.xsd
-        http://www.w3.org/1999/xlink http://www.docbook.org/xml/5.0/xsd/xlink.xsd">
+        http://docbook.org/ns/docbook https://www.docbook.org/xml/5.0/xsd/docbook.xsd
+        http://www.w3.org/1999/xlink https://www.docbook.org/xml/5.0/xsd/xlink.xsd">
   <title>Spring Expression Language (SpEL)</title>
 
   <section xml:id="expressions-intro">
@@ -490,13 +490,12 @@ Boolean b = simple.booleanList.get(0);
     <section xml:id="expressions-ref-literal">
       <title>Literal expressions</title>
 
-      <para>The types of literal expressions supported are strings, dates,
-      numeric values (int, real, and hex), boolean and null. Strings are
-      delimited by single quotes. To put a single quote itself in a string use
-      two single quote characters. The following listing shows simple usage of
-      literals. Typically they would not be used in isolation like this, but
-      as part of a more complex expression, for example using a literal on one
-      side of a logical comparison operator.</para>
+      <para>The types of literal expressions supported are strings, numeric values
+      (int, real, hex), boolean and null. Strings are delimited by single quotes.
+      To put a single quote itself in a string, use two single quote characters.
+      The following listing shows simple usage of literals. Typically they would not
+      be used in isolation like this but rather as part of a more complex expression,
+      for example using a literal on one side of a logical comparison operator.</para>
 
       <programlisting language="java">ExpressionParser parser = new SpelExpressionParser();
 
@@ -626,8 +625,8 @@ int[][] numbers3 = (int[][]) parser.parseExpression("new int[4][5]").getValue(co
 String c = parser.parseExpression("'abc'.substring(2, 3)").getValue(String.class);
 
 // evaluates to true
-boolean isMember = parser.parseExpression("isMember('Mihajlo Pupin')").getValue(societyContext,
-                                                                                Boolean.class);</programlisting>
+boolean isMember = parser.parseExpression("isMember('Mihajlo Pupin')").getValue(societyContext, Boolean.class);
+      </programlisting>
     </section>
 
     <section xml:id="expressions-operators">
@@ -640,15 +639,24 @@ boolean isMember = parser.parseExpression("isMember('Mihajlo Pupin')").getValue(
         or equal, greater than, and greater than or equal are supported using
         standard operator notation.</para>
 
-        <para><programlisting language="java">// evaluates to true
+        <programlisting language="java">// evaluates to true
 boolean trueValue = parser.parseExpression("2 == 2").getValue(Boolean.class);
 
 // evaluates to false
 boolean falseValue = parser.parseExpression("2 &lt; -5.0").getValue(Boolean.class);
 
 // evaluates to true
-boolean trueValue = parser.parseExpression("'black' &lt; 'block'").getValue(Boolean.class);</programlisting>
-        In addition to standard relational operators SpEL supports the
+boolean trueValue = parser.parseExpression("'black' &lt; 'block'").getValue(Boolean.class);
+        </programlisting>
+
+        <para>Greater/less-than comparisons against `null` follow a simple rule: `null`
+        is treated as nothing here (i.e. NOT as zero). As a consequence, any other value
+        is always greater than `null` (`X &gt; null` is always `true`) and no other value
+        is ever less than nothing (`X &lt; null` is always `false`). If you prefer numeric
+        comparisons instead, please avoid number-based `null` comparisons in favor of
+        comparisons against zero (e.g. `X &gt; 0` or `X &lt; 0`).</para>
+
+        <para>In addition to standard relational operators SpEL supports the
         'instanceof' and regular expression based 'matches' operator.</para>
 
         <programlisting language="java">// evaluates to false
@@ -661,14 +669,13 @@ boolean trueValue =
 //evaluates to false
 boolean falseValue =
      parser.parseExpression("'5.0067' matches '^-?\\d+(\\.\\d{2})?$'").getValue(Boolean.class);
+        </programlisting>
 
-</programlisting>
-      <para>Each symbolic operator can also be specified as a purely alphabetic equivalent.  This avoids
-      problems where the symbols used have special meaning for the document type in which
-      the expression is embedded (eg. an XML document).  The textual equivalents are shown
-      here: lt ('&lt;'), gt ('&gt;'), le ('&lt;='), ge ('&gt;='),
-      eq ('=='), ne ('!='), div ('/'), mod ('%'), not ('!').
-      These are case insensitive.</para>
+        <para>Each symbolic operator can also be specified as a purely alphabetic equivalent.
+        This avoids problems where the symbols used have special meaning for the document type
+        in which the expression is embedded (eg. an XML document). The textual equivalents are
+        shown here: lt ('&lt;'), gt ('&gt;'), le ('&lt;='), ge ('&gt;='), eq ('=='), ne ('!='),
+        div ('/'), mod ('%'), not ('!'). These are case insensitive.</para>
       </section>
 
       <section xml:id="expressions-operators-logical">
@@ -953,7 +960,7 @@ String queryResultString =
       <title>The Elvis Operator</title>
 
       <para>The Elvis operator is a shortening of the ternary operator syntax
-      and is used in the <link xl:href="http://groovy.codehaus.org/Operators#Operators-ElvisOperator(%3F%3A)">Groovy</link>
+      and is used in the <link xl:href="https://groovy.codehaus.org/Operators#Operators-ElvisOperator(%3F%3A)">Groovy</link>
       language. With the ternary operator syntax you usually have to repeat a
       variable twice, for example:</para>
 
@@ -994,7 +1001,7 @@ System.out.println(name); // Elvis Presley</programlisting>
 
       <para>The Safe Navigation operator is used to avoid a
       <literal>NullPointerException</literal> and comes from the <link
-      xl:href="http://groovy.codehaus.org/Operators#Operators-SafeNavigationOperator(%3F.)">Groovy</link>
+      xl:href="https://groovy.codehaus.org/Operators#Operators-SafeNavigationOperator(%3F.)">Groovy</link>
       language. Typically when you have a reference to an object you might
       need to verify that it is not null before accessing methods or
       properties of the object. To avoid this, the safe navigation operator

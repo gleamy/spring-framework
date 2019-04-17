@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2013 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -34,6 +34,7 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.Constants;
 import org.springframework.util.Assert;
+import org.springframework.util.ClassUtils;
 import org.springframework.util.ReflectionUtils;
 
 /**
@@ -244,7 +245,9 @@ public class CronTriggerFactoryBean implements FactoryBean<CronTrigger>, BeanNam
 		CronTriggerImpl cti = new CronTriggerImpl();
 		cti.setName(this.name);
 		cti.setGroup(this.group);
-		cti.setJobKey(this.jobDetail.getKey());
+		if (this.jobDetail != null) {
+			cti.setJobKey(this.jobDetail.getKey());
+		}
 		cti.setJobDataMap(this.jobDataMap);
 		cti.setStartTime(this.startTime);
 		cti.setCronExpression(this.cronExpression);
@@ -259,7 +262,7 @@ public class CronTriggerFactoryBean implements FactoryBean<CronTrigger>, BeanNam
 		Class<?> cronTriggerClass;
 		Method jobKeyMethod;
 		try {
-			cronTriggerClass = getClass().getClassLoader().loadClass("org.quartz.impl.triggers.CronTriggerImpl");
+			cronTriggerClass = ClassUtils.forName("org.quartz.impl.triggers.CronTriggerImpl", getClass().getClassLoader());
 			jobKeyMethod = JobDetail.class.getMethod("getKey");
 		}
 		catch (ClassNotFoundException ex) {
@@ -273,12 +276,14 @@ public class CronTriggerFactoryBean implements FactoryBean<CronTrigger>, BeanNam
 		MutablePropertyValues pvs = new MutablePropertyValues();
 		pvs.add("name", this.name);
 		pvs.add("group", this.group);
-		if (jobKeyMethod != null) {
-			pvs.add("jobKey", ReflectionUtils.invokeMethod(jobKeyMethod, this.jobDetail));
-		}
-		else {
-			pvs.add("jobName", this.jobDetail.getName());
-			pvs.add("jobGroup", this.jobDetail.getGroup());
+		if (this.jobDetail != null) {
+			if (jobKeyMethod != null) {
+				pvs.add("jobKey", ReflectionUtils.invokeMethod(jobKeyMethod, this.jobDetail));
+			}
+			else {
+				pvs.add("jobName", this.jobDetail.getName());
+				pvs.add("jobGroup", this.jobDetail.getGroup());
+			}
 		}
 		pvs.add("jobDataMap", this.jobDataMap);
 		pvs.add("startTime", this.startTime);

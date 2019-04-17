@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,7 +31,7 @@ import org.springframework.web.servlet.view.AbstractView;
 
 /**
  * Abstract superclass for PDF views, using Bruno Lowagie's
- * <a href="http://www.lowagie.com/iText">iText</a> package.
+ * <a href="https://www.lowagie.com/iText">iText</a> package.
  * Application-specific view classes will extend this class.
  * The view will be held in the subclass itself, not in a template.
  *

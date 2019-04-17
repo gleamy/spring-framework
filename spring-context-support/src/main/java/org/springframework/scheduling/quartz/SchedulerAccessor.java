@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -42,6 +42,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
+import org.springframework.util.ClassUtils;
 import org.springframework.util.ReflectionUtils;
 
 /**
@@ -66,8 +67,8 @@ public abstract class SchedulerAccessor implements ResourceLoaderAware {
 	static {
 		// Quartz 2.0 job/trigger key available?
 		try {
-			jobKeyClass = Class.forName("org.quartz.JobKey");
-			triggerKeyClass = Class.forName("org.quartz.TriggerKey");
+			jobKeyClass = ClassUtils.forName("org.quartz.JobKey", SchedulerAccessor.class.getClassLoader());
+			triggerKeyClass = ClassUtils.forName("org.quartz.TriggerKey", SchedulerAccessor.class.getClassLoader());
 		}
 		catch (ClassNotFoundException ex) {
 			jobKeyClass = null;
@@ -142,12 +143,10 @@ public abstract class SchedulerAccessor implements ResourceLoaderAware {
 	 * in combination with the Trigger.
 	 * @see #setTriggers
 	 * @see org.quartz.JobDetail
-	 * @see JobDetailBean
-	 * @see JobDetailAwareTrigger
 	 */
 	public void setJobDetails(JobDetail... jobDetails) {
 		// Use modifiable ArrayList here, to allow for further adding of
-		// JobDetail objects during autodetection of JobDetailAwareTriggers.
+		// JobDetail objects during autodetection of JobDetail-aware Triggers.
 		this.jobDetails = new ArrayList<JobDetail>(Arrays.asList(jobDetails));
 	}
 
@@ -171,14 +170,10 @@ public abstract class SchedulerAccessor implements ResourceLoaderAware {
 	 * "jobDetails" property of this FactoryBean.
 	 * @see #setJobDetails
 	 * @see org.quartz.JobDetail
-	 * @see JobDetailAwareTrigger
-	 * @see CronTriggerBean
-	 * @see SimpleTriggerBean
 	 */
 	public void setTriggers(Trigger... triggers) {
 		this.triggers = Arrays.asList(triggers);
 	}
-
 
 	/**
 	 * Specify Quartz SchedulerListeners to be registered with the Scheduler.
@@ -260,7 +255,7 @@ public abstract class SchedulerAccessor implements ResourceLoaderAware {
 				clh.initialize();
 				try {
 					// Quartz 1.8 or higher?
-					Class<?> dataProcessorClass = getClass().getClassLoader().loadClass("org.quartz.xml.XMLSchedulingDataProcessor");
+					Class<?> dataProcessorClass = ClassUtils.forName("org.quartz.xml.XMLSchedulingDataProcessor", getClass().getClassLoader());
 					logger.debug("Using Quartz 1.8 XMLSchedulingDataProcessor");
 					Object dataProcessor = dataProcessorClass.getConstructor(ClassLoadHelper.class).newInstance(clh);
 					Method processFileAndScheduleJobs = dataProcessorClass.getMethod("processFileAndScheduleJobs", String.class, Scheduler.class);
@@ -270,7 +265,7 @@ public abstract class SchedulerAccessor implements ResourceLoaderAware {
 				}
 				catch (ClassNotFoundException ex) {
 					// Quartz 1.6
-					Class<?> dataProcessorClass = getClass().getClassLoader().loadClass("org.quartz.xml.JobSchedulingDataProcessor");
+					Class<?> dataProcessorClass = ClassUtils.forName("org.quartz.xml.JobSchedulingDataProcessor", getClass().getClassLoader());
 					logger.debug("Using Quartz 1.6 JobSchedulingDataProcessor");
 					Object dataProcessor = dataProcessorClass.getConstructor(ClassLoadHelper.class, boolean.class, boolean.class).newInstance(clh, true, true);
 					Method processFileAndScheduleJobs = dataProcessorClass.getMethod("processFileAndScheduleJobs", String.class, Scheduler.class, boolean.class);

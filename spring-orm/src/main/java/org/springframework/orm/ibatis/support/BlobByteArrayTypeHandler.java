@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -36,7 +36,7 @@ import org.springframework.jdbc.support.lob.LobHandler;
  * @since 1.1.5
  * @see org.springframework.orm.ibatis.SqlMapClientFactoryBean#setLobHandler
  * @deprecated as of Spring 3.2, in favor of the native Spring support
- * in the Mybatis follow-up project (http://code.google.com/p/mybatis/)
+ * in the Mybatis follow-up project (https://code.google.com/p/mybatis/)
  */
 @Deprecated
 public class BlobByteArrayTypeHandler extends AbstractLobTypeHandler {

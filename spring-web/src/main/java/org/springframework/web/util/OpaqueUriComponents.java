@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2013 the original author or authors.
+ * Copyright 2002-2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,7 +32,7 @@ import org.springframework.util.ObjectUtils;
  * @author Arjen Poutsma
  * @author Phillip Webb
  * @since 3.2
- * @see <a href="http://tools.ietf.org/html/rfc3986#section-1.2.3">Hierarchical vs Opaque URIs</a>
+ * @see <a href="https://tools.ietf.org/html/rfc3986#section-1.2.3">Hierarchical vs Opaque URIs</a>
  */
 @SuppressWarnings("serial")
 final class OpaqueUriComponents extends UriComponents {
@@ -95,10 +95,10 @@ final class OpaqueUriComponents extends UriComponents {
 
 	@Override
 	protected UriComponents expandInternal(UriTemplateVariables uriVariables) {
-		String expandedScheme = expandUriComponent(this.getScheme(), uriVariables);
-		String expandedSSp = expandUriComponent(this.ssp, uriVariables);
-		String expandedFragment = expandUriComponent(this.getFragment(), uriVariables);
-		return new OpaqueUriComponents(expandedScheme, expandedSSp, expandedFragment);
+		String expandedScheme = expandUriComponent(getScheme(), uriVariables);
+		String expandedSsp = expandUriComponent(getSchemeSpecificPart(), uriVariables);
+		String expandedFragment = expandUriComponent(getFragment(), uriVariables);
+		return new OpaqueUriComponents(expandedScheme, expandedSsp, expandedFragment);
 	}
 
 	@Override

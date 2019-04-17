@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -213,7 +213,7 @@ public abstract class AbstractHandlerExceptionResolver implements HandlerExcepti
 
 	/**
 	 * Prevents the response from being cached, through setting corresponding
-	 * HTTP headers. See {@code http://www.mnot.net/cache_docs}.
+	 * HTTP headers. See {@code https://www.mnot.net/cache_docs}.
 	 * @param response current HTTP response
 	 */
 	protected void preventCaching(HttpServletResponse response) {

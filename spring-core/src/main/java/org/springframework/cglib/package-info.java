@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,7 +22,7 @@
  * libraries and frameworks.
  * <p>As this repackaging happens at the classfile level, sources and Javadoc
  * are not available here. See the original
- * <a href="http://cglib.sourceforge.net/apidocs">CGLIB 3 Javadoc</a>
+ * <a href="http://cglib.sourceforge.net/apidocs/">CGLIB 3 Javadoc</a>
  * for details when working with these classes.
  *
  * @since 3.2

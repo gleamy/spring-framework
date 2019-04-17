@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2010 the original author or authors.
+ * Copyright 2002-2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,6 +25,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.JdkVersion;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
 /**
@@ -74,7 +75,7 @@ public class TaskExecutorFactoryBean implements
 
 	public void afterPropertiesSet() throws Exception {
 		Class<?> executorClass = (shouldUseBackport() ?
-				getClass().getClassLoader().loadClass("org.springframework.scheduling.backportconcurrent.ThreadPoolTaskExecutor") :
+				ClassUtils.forName("org.springframework.scheduling.backportconcurrent.ThreadPoolTaskExecutor", getClass().getClassLoader()) :
 				ThreadPoolTaskExecutor.class);
 		BeanWrapper bw = new BeanWrapperImpl(executorClass);
 		determinePoolSizeRange(bw);

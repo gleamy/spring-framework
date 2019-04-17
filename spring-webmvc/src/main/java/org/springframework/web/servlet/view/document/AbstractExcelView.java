@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2009 the original author or authors.
+ * Copyright 2002-2015 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -51,7 +51,7 @@ import org.springframework.web.servlet.view.AbstractView;
  * </ul>
  *
  * <p>For working with the workbook in the subclass, see
- * <a href="http://jakarta.apache.org/poi/index.html">Jakarta's POI site</a>
+ * <a href="https://poi.apache.org">Apache's POI site</a>
  *
  * <p>As an example, you can try this snippet:
  *
@@ -194,7 +194,7 @@ public abstract class AbstractExcelView extends AbstractView {
 	 * <p>Creates the row and the cell if they still doesn't already exist.
 	 * Thus, the column can be passed as an int, the method making the needed downcasts.
 	 * @param sheet a sheet object. The first sheet is usually obtained by workbook.getSheetAt(0)
-	 * @param row thr row number
+	 * @param row the row number
 	 * @param col the column number
 	 * @return the HSSFCell
 	 */

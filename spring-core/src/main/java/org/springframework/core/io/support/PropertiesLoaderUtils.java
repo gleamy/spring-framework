@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2013 the original author or authors.
+ * Copyright 2002-2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -170,14 +170,15 @@ public abstract class PropertiesLoaderUtils {
 	 */
 	public static Properties loadAllProperties(String resourceName, ClassLoader classLoader) throws IOException {
 		Assert.notNull(resourceName, "Resource name must not be null");
-		ClassLoader clToUse = classLoader;
-		if (clToUse == null) {
-			clToUse = ClassUtils.getDefaultClassLoader();
+		ClassLoader classLoaderToUse = classLoader;
+		if (classLoaderToUse == null) {
+			classLoaderToUse = ClassUtils.getDefaultClassLoader();
 		}
+		Enumeration<URL> urls = (classLoaderToUse != null ? classLoaderToUse.getResources(resourceName) :
+				ClassLoader.getSystemResources(resourceName));
 		Properties props = new Properties();
-		Enumeration urls = clToUse.getResources(resourceName);
 		while (urls.hasMoreElements()) {
-			URL url = (URL) urls.nextElement();
+			URL url = urls.nextElement();
 			URLConnection con = url.openConnection();
 			ResourceUtils.useCachesIfNecessary(con);
 			InputStream is = con.getInputStream();

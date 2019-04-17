@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2013 the original author or authors.
+ * Copyright 2002-2015 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,7 +32,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-
 import javax.security.auth.Subject;
 
 import org.apache.commons.logging.Log;
@@ -41,6 +40,7 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+
 import org.springframework.beans.BeansException;
 import org.springframework.beans.MutablePropertyValues;
 import org.springframework.beans.NotWritablePropertyException;
@@ -104,8 +104,10 @@ public class DefaultListableBeanFactoryTests {
 
 	private static final Log factoryLog = LogFactory.getLog(DefaultListableBeanFactory.class);
 
+
 	@Rule
 	public ExpectedException thrown = ExpectedException.none();
+
 
 	@Test
 	public void testUnreferencedSingletonWasInstantiated() {
@@ -188,7 +190,7 @@ public class DefaultListableBeanFactoryTests {
 	}
 
 	@Test
-	public void testPrototypeSingletonFactoryBeanIgnoredByNonEagerTypeMatching() {
+	public void testSingletonFactoryBeanIgnoredByNonEagerTypeMatching() {
 		DefaultListableBeanFactory lbf = new DefaultListableBeanFactory();
 		Properties p = new Properties();
 		p.setProperty("x1.(class)", DummyFactory.class.getName());
@@ -1210,8 +1212,8 @@ public class DefaultListableBeanFactoryTests {
 		}
 		catch (UnsatisfiedDependencyException ex) {
 			// expected
-			assertTrue(ex.getMessage().indexOf("rod") != -1);
-			assertTrue(ex.getMessage().indexOf("rod2") != -1);
+			assertTrue(ex.getMessage().contains("rod"));
+			assertTrue(ex.getMessage().contains("rod2"));
 		}
 	}
 
@@ -1281,13 +1283,13 @@ public class DefaultListableBeanFactoryTests {
 		assertNull(bean.getSpouse());
 	}
 
-	@Test(expected=NoSuchBeanDefinitionException.class)
+	@Test(expected = NoSuchBeanDefinitionException.class)
 	public void testGetBeanByTypeWithNoneFound() {
 		DefaultListableBeanFactory lbf = new DefaultListableBeanFactory();
 		lbf.getBean(TestBean.class);
 	}
 
-	@Test(expected=NoUniqueBeanDefinitionException.class)
+	@Test(expected = NoUniqueBeanDefinitionException.class)
 	public void testGetBeanByTypeWithAmbiguity() {
 		DefaultListableBeanFactory lbf = new DefaultListableBeanFactory();
 		RootBeanDefinition bd1 = new RootBeanDefinition(TestBean.class);
@@ -1360,7 +1362,7 @@ public class DefaultListableBeanFactoryTests {
 	/**
 	 * Verifies that a dependency on a {@link FactoryBean} can be autowired
 	 * <em>by type</em>, specifically addressing the JIRA issue raised in <a
-	 * href="http://opensource.atlassian.com/projects/spring/browse/SPR-4040"
+	 * href="https://opensource.atlassian.com/projects/spring/browse/SPR-4040"
 	 * target="_blank">SPR-4040</a>.
 	 */
 	@Test
@@ -1391,7 +1393,7 @@ public class DefaultListableBeanFactoryTests {
 	 * Java method names. In other words, you can't name a method
 	 * {@code set&amp;FactoryBean(...)}.
 	 */
-	@Test(expected=TypeMismatchException.class)
+	@Test(expected = TypeMismatchException.class)
 	public void testAutowireBeanWithFactoryBeanByName() {
 		DefaultListableBeanFactory lbf = new DefaultListableBeanFactory();
 		RootBeanDefinition bd = new RootBeanDefinition(LazyInitFactory.class);
@@ -1414,8 +1416,8 @@ public class DefaultListableBeanFactoryTests {
 		}
 		catch (UnsatisfiedDependencyException ex) {
 			// expected
-			assertTrue(ex.getMessage().indexOf("test") != -1);
-			assertTrue(ex.getMessage().indexOf("spouse") != -1);
+			assertTrue(ex.getMessage().contains("test"));
+			assertTrue(ex.getMessage().contains("spouse"));
 		}
 	}
 
@@ -1432,8 +1434,8 @@ public class DefaultListableBeanFactoryTests {
 		}
 		catch (UnsatisfiedDependencyException ex) {
 			// expected
-			assertTrue(ex.getMessage().indexOf("test") != -1);
-			assertTrue(ex.getMessage().indexOf("spouse") != -1);
+			assertTrue(ex.getMessage().contains("test"));
+			assertTrue(ex.getMessage().contains("spouse"));
 		}
 	}
 
@@ -1681,7 +1683,7 @@ public class DefaultListableBeanFactoryTests {
 		}
 		catch (BeanCreationException ex) {
 			assertEquals("test", ex.getBeanName());
-			assertTrue(ex.getMessage().toLowerCase().indexOf("interface") != -1);
+			assertTrue(ex.getMessage().toLowerCase().contains("interface"));
 		}
 	}
 
@@ -1695,7 +1697,7 @@ public class DefaultListableBeanFactoryTests {
 		}
 		catch (BeanCreationException ex) {
 			assertEquals("test", ex.getBeanName());
-			assertTrue(ex.getMessage().toLowerCase().indexOf("abstract") != -1);
+			assertTrue(ex.getMessage().toLowerCase().contains("abstract"));
 		}
 	}
 
@@ -2142,13 +2144,13 @@ public class DefaultListableBeanFactoryTests {
 		assertEquals(expectedNameFromArgs, tb2.getName());
 	}
 
-	@Test(expected=IllegalStateException.class)
+	@Test(expected = IllegalStateException.class)
 	public void testScopingBeanToUnregisteredScopeResultsInAnException() throws Exception {
 		BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(TestBean.class);
 		AbstractBeanDefinition beanDefinition = builder.getBeanDefinition();
 		beanDefinition.setScope("he put himself so low could hardly look me in the face");
 
-		final DefaultListableBeanFactory factory = new DefaultListableBeanFactory();
+		DefaultListableBeanFactory factory = new DefaultListableBeanFactory();
 		factory.registerBeanDefinition("testBean", beanDefinition);
 		factory.getBean("testBean");
 	}
@@ -2160,8 +2162,7 @@ public class DefaultListableBeanFactoryTests {
 		RootBeanDefinition parent = new RootBeanDefinition();
 		parent.setScope(RootBeanDefinition.SCOPE_PROTOTYPE);
 
-		AbstractBeanDefinition child = BeanDefinitionBuilder
-				.childBeanDefinition("parent").getBeanDefinition();
+		AbstractBeanDefinition child = BeanDefinitionBuilder.childBeanDefinition("parent").getBeanDefinition();
 		child.setBeanClass(TestBean.class);
 		child.setScope(theChildScope);
 
@@ -2675,6 +2676,7 @@ public class DefaultListableBeanFactoryTests {
 			return this.userName;
 		}
 	}
+
 
 	@SuppressWarnings("unused")
 	private static class KnowsIfInstantiated {

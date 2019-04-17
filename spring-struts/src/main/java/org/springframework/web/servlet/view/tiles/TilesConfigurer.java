@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,7 +28,7 @@ import org.springframework.web.context.support.WebApplicationObjectSupport;
 
 /**
  * Helper class to configure Tiles 1.x for the Spring Framework. See
- * <a href="http://struts.apache.org">http://struts.apache.org</a>
+ * <a href="https://struts.apache.org">https://struts.apache.org</a>
  * for more information about Struts Tiles, which basically is a templating
  * mechanism for JSP-based web applications.
  *

@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2013 the original author or authors.
+ * Copyright 2002-2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -120,7 +120,7 @@ public abstract class WebContentGenerator extends WebApplicationObjectSupport {
 	 * <p>Default is GET, HEAD and POST for simple form controller types;
 	 * unrestricted for general controllers and interceptors.
 	 */
-	public final void setSupportedMethods(String[] methods) {
+	public final void setSupportedMethods(String... methods) {
 		if (methods != null) {
 			this.supportedMethods = new HashSet<String>(Arrays.asList(methods));
 		}
@@ -210,7 +210,7 @@ public abstract class WebContentGenerator extends WebApplicationObjectSupport {
 	}
 
 	/**
-	 * Return whether 'must-revaliate' is added to every Cache-Control header.
+	 * Return whether 'must-revalidate' is added to every Cache-Control header.
 	 */
 	public boolean isAlwaysMustRevalidate() {
 		return alwaysMustRevalidate;
@@ -287,7 +287,7 @@ public abstract class WebContentGenerator extends WebApplicationObjectSupport {
 
 	/**
 	 * Prevent the response from being cached.
-	 * See {@code http://www.mnot.net/cache_docs}.
+	 * See {@code https://www.mnot.net/cache_docs}.
 	 */
 	protected final void preventCaching(HttpServletResponse response) {
 		response.setHeader(HEADER_PRAGMA, "no-cache");

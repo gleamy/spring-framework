@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2014 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -156,7 +156,7 @@ class ConstructorResolver {
 				catch (Throwable ex) {
 					throw new BeanCreationException(mbd.getResourceDescription(), beanName,
 							"Resolution of declared constructors on bean Class [" + beanClass.getName() +
-									"] from ClassLoader [" + beanClass.getClassLoader() + "] failed", ex);
+							"] from ClassLoader [" + beanClass.getClassLoader() + "] failed", ex);
 				}
 			}
 			AutowireUtils.sortConstructors(candidates);
@@ -377,7 +377,7 @@ class ConstructorResolver {
 			factoryBean = this.beanFactory.getBean(factoryBeanName);
 			if (factoryBean == null) {
 				throw new BeanCreationException(mbd.getResourceDescription(), beanName,
-						"factory-bean '" + factoryBeanName + "' returned null");
+						"factory-bean '" + factoryBeanName + "' (or a BeanPostProcessor involved) returned null");
 			}
 			factoryClass = factoryBean.getClass();
 			isStatic = false;
@@ -613,8 +613,8 @@ class ConstructorResolver {
 			String beanName, RootBeanDefinition mbd, BeanWrapper bw,
 			ConstructorArgumentValues cargs, ConstructorArgumentValues resolvedValues) {
 
-		TypeConverter converter = (this.beanFactory.getCustomTypeConverter() != null ?
-				this.beanFactory.getCustomTypeConverter() : bw);
+		TypeConverter customConverter = this.beanFactory.getCustomTypeConverter();
+		TypeConverter converter = (customConverter != null ? customConverter : bw);
 		BeanDefinitionValueResolver valueResolver =
 				new BeanDefinitionValueResolver(this.beanFactory, beanName, mbd, converter);
 
@@ -670,8 +670,8 @@ class ConstructorResolver {
 			boolean autowiring) throws UnsatisfiedDependencyException {
 
 		String methodType = (methodOrCtor instanceof Constructor ? "constructor" : "factory method");
-		TypeConverter converter = (this.beanFactory.getCustomTypeConverter() != null ?
-				this.beanFactory.getCustomTypeConverter() : bw);
+		TypeConverter customConverter = this.beanFactory.getCustomTypeConverter();
+		TypeConverter converter = (customConverter != null ? customConverter : bw);
 
 		ArgumentsHolder args = new ArgumentsHolder(paramTypes.length);
 		Set<ConstructorArgumentValues.ValueHolder> usedValueHolders =
@@ -772,12 +772,13 @@ class ConstructorResolver {
 	private Object[] resolvePreparedArguments(
 			String beanName, RootBeanDefinition mbd, BeanWrapper bw, Member methodOrCtor, Object[] argsToResolve) {
 
-		Class<?>[] paramTypes = (methodOrCtor instanceof Method ?
-				((Method) methodOrCtor).getParameterTypes() : ((Constructor<?>) methodOrCtor).getParameterTypes());
-		TypeConverter converter = (this.beanFactory.getCustomTypeConverter() != null ?
-				this.beanFactory.getCustomTypeConverter() : bw);
+		TypeConverter customConverter = this.beanFactory.getCustomTypeConverter();
+		TypeConverter converter = (customConverter != null ? customConverter : bw);
 		BeanDefinitionValueResolver valueResolver =
 				new BeanDefinitionValueResolver(this.beanFactory, beanName, mbd, converter);
+		Class<?>[] paramTypes = (methodOrCtor instanceof Method ?
+				((Method) methodOrCtor).getParameterTypes() : ((Constructor<?>) methodOrCtor).getParameterTypes());
+
 		Object[] resolvedArgs = new Object[argsToResolve.length];
 		for (int argIndex = 0; argIndex < argsToResolve.length; argIndex++) {
 			Object argValue = argsToResolve[argIndex];

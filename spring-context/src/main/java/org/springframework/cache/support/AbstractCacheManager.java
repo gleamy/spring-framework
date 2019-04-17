@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2013 the original author or authors.
+ * Copyright 2002-2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -45,12 +45,11 @@ public abstract class AbstractCacheManager implements CacheManager, Initializing
 	public void afterPropertiesSet() {
 		Collection<? extends Cache> caches = loadCaches();
 
-		// preserve the initial order of the cache names
+		// Preserve the initial order of the cache names
 		this.cacheMap.clear();
 		this.cacheNames.clear();
 		for (Cache cache : caches) {
-			this.cacheMap.put(cache.getName(), decorateCache(cache));
-			this.cacheNames.add(cache.getName());
+			addCache(cache);
 		}
 	}
 
@@ -80,8 +79,9 @@ public abstract class AbstractCacheManager implements CacheManager, Initializing
 
 
 	/**
-	 * Load the caches for this cache manager. Occurs at startup.
-	 * The returned collection must not be null.
+	 * Load the initial caches for this cache manager.
+	 * <p>Called by {@link #afterPropertiesSet()} on startup.
+	 * The returned collection may be empty but must not be {@code null}.
 	 */
 	protected abstract Collection<? extends Cache> loadCaches();
 

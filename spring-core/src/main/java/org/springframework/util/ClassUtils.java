@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2013 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,7 +22,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
-import java.security.AccessControlException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -56,13 +55,16 @@ public abstract class ClassUtils {
 	/** Prefix for internal non-primitive array class names: "[L" */
 	private static final String NON_PRIMITIVE_ARRAY_PREFIX = "[L";
 
-	/** The package separator character '.' */
+	/** The package separator character: '.' */
 	private static final char PACKAGE_SEPARATOR = '.';
 
-	/** The inner class separator character '$' */
+	/** The path separator character: '/' */
+	private static final char PATH_SEPARATOR = '/';
+
+	/** The inner class separator character: '$' */
 	private static final char INNER_CLASS_SEPARATOR = '$';
 
-	/** The CGLIB class separator character "$$" */
+	/** The CGLIB class separator: "$$" */
 	public static final String CGLIB_CLASS_SEPARATOR = "$$";
 
 	/** The ".class" file suffix */
@@ -142,12 +144,14 @@ public abstract class ClassUtils {
 	 * ClassLoader, if available; the ClassLoader that loaded the ClassUtils
 	 * class will be used as fallback.
 	 * <p>Call this method if you intend to use the thread context ClassLoader
-	 * in a scenario where you absolutely need a non-null ClassLoader reference:
+	 * in a scenario where you clearly prefer a non-null ClassLoader reference:
 	 * for example, for class path resource loading (but not necessarily for
 	 * {@code Class.forName}, which accepts a {@code null} ClassLoader
 	 * reference as well).
-	 * @return the default ClassLoader (never {@code null})
+	 * @return the default ClassLoader (only {@code null} if even the system
+	 * ClassLoader isn't accessible)
 	 * @see Thread#getContextClassLoader()
+	 * @see ClassLoader#getSystemClassLoader()
 	 */
 	public static ClassLoader getDefaultClassLoader() {
 		ClassLoader cl = null;
@@ -155,11 +159,20 @@ public abstract class ClassUtils {
 			cl = Thread.currentThread().getContextClassLoader();
 		}
 		catch (Throwable ex) {
-			// Cannot access thread context ClassLoader - falling back to system class loader...
+			// Cannot access thread context ClassLoader - falling back...
 		}
 		if (cl == null) {
 			// No thread context class loader -> use class loader of this class.
 			cl = ClassUtils.class.getClassLoader();
+			if (cl == null) {
+				// getClassLoader() returning null indicates the bootstrap ClassLoader
+				try {
+					cl = ClassLoader.getSystemClassLoader();
+				}
+				catch (Throwable ex) {
+					// Cannot access system ClassLoader - oh well, maybe the caller can live with null...
+				}
+			}
 		}
 		return cl;
 	}
@@ -204,7 +217,7 @@ public abstract class ClassUtils {
 
 	/**
 	 * Replacement for {@code Class.forName()} that also returns Class instances
-	 * for primitives (e.g."int") and array class names (e.g. "String[]").
+	 * for primitives (e.g. "int") and array class names (e.g. "String[]").
 	 * Furthermore, it is also capable of resolving inner class names in Java source
 	 * style (e.g. "java.lang.Thread.State" instead of "java.lang.Thread$State").
 	 * @param name the name of the Class
@@ -247,22 +260,23 @@ public abstract class ClassUtils {
 			return Array.newInstance(elementClass, 0).getClass();
 		}
 
-		ClassLoader classLoaderToUse = classLoader;
-		if (classLoaderToUse == null) {
-			classLoaderToUse = getDefaultClassLoader();
+		ClassLoader clToUse = classLoader;
+		if (clToUse == null) {
+			clToUse = getDefaultClassLoader();
 		}
 		try {
-			return classLoaderToUse.loadClass(name);
+			return (clToUse != null ? clToUse.loadClass(name) : Class.forName(name));
 		}
 		catch (ClassNotFoundException ex) {
-			int lastDotIndex = name.lastIndexOf('.');
+			int lastDotIndex = name.lastIndexOf(PACKAGE_SEPARATOR);
 			if (lastDotIndex != -1) {
-				String innerClassName = name.substring(0, lastDotIndex) + '$' + name.substring(lastDotIndex + 1);
+				String innerClassName =
+						name.substring(0, lastDotIndex) + INNER_CLASS_SEPARATOR + name.substring(lastDotIndex + 1);
 				try {
-					return classLoaderToUse.loadClass(innerClassName);
+					return (clToUse != null ? clToUse.loadClass(innerClassName) : Class.forName(innerClassName));
 				}
 				catch (ClassNotFoundException ex2) {
-					// swallow - let original exception get through
+					// Swallow - let original exception get through
 				}
 			}
 			throw ex;
@@ -370,9 +384,9 @@ public abstract class ClassUtils {
 	 */
 	public static Class<?> getUserClass(Class<?> clazz) {
 		if (clazz != null && clazz.getName().contains(CGLIB_CLASS_SEPARATOR)) {
-			Class<?> superClass = clazz.getSuperclass();
-			if (superClass != null && !Object.class.equals(superClass)) {
-				return superClass;
+			Class<?> superclass = clazz.getSuperclass();
+			if (superclass != null && !Object.class.equals(superclass)) {
+				return superclass;
 			}
 		}
 		return clazz;
@@ -386,21 +400,27 @@ public abstract class ClassUtils {
 	 */
 	public static boolean isCacheSafe(Class<?> clazz, ClassLoader classLoader) {
 		Assert.notNull(clazz, "Class must not be null");
-		ClassLoader target = clazz.getClassLoader();
-		if (target == null) {
-			return false;
-		}
-		ClassLoader cur = classLoader;
-		if (cur == target) {
-			return true;
-		}
-		while (cur != null) {
-			cur = cur.getParent();
+		try {
+			ClassLoader target = clazz.getClassLoader();
+			if (target == null) {
+				return true;
+			}
+			ClassLoader cur = classLoader;
 			if (cur == target) {
 				return true;
 			}
+			while (cur != null) {
+				cur = cur.getParent();
+				if (cur == target) {
+					return true;
+				}
+			}
+			return false;
 		}
-		return false;
+		catch (SecurityException ex) {
+			// Probably from the system ClassLoader - let's consider it safe.
+			return true;
+		}
 	}
 
 
@@ -439,8 +459,8 @@ public abstract class ClassUtils {
 	 * @see java.beans.Introspector#decapitalize(String)
 	 */
 	public static String getShortNameAsProperty(Class<?> clazz) {
-		String shortName = ClassUtils.getShortName(clazz);
-		int dotIndex = shortName.lastIndexOf('.');
+		String shortName = getShortName(clazz);
+		int dotIndex = shortName.lastIndexOf(PACKAGE_SEPARATOR);
 		shortName = (dotIndex != -1 ? shortName.substring(dotIndex + 1) : shortName);
 		return Introspector.decapitalize(shortName);
 	}
@@ -509,7 +529,7 @@ public abstract class ClassUtils {
 		StringBuilder result = new StringBuilder();
 		while (clazz.isArray()) {
 			clazz = clazz.getComponentType();
-			result.append(ClassUtils.ARRAY_SUFFIX);
+			result.append(ARRAY_SUFFIX);
 		}
 		result.insert(0, clazz.getName());
 		return result.toString();
@@ -789,7 +809,7 @@ public abstract class ClassUtils {
 					return (specificMethod != null ? specificMethod : method);
 				}
 			}
-			catch (AccessControlException ex) {
+			catch (SecurityException ex) {
 				// Security settings are disallowing reflective access; fall back to 'method' below.
 			}
 		}
@@ -813,8 +833,8 @@ public abstract class ClassUtils {
 
 	/**
 	 * Return a public static method of a class.
-	 * @param methodName the static method name
 	 * @param clazz the class which defines the method
+	 * @param methodName the static method name
 	 * @param args the parameter types to the method
 	 * @return the static method, or {@code null} if no static method was found
 	 * @throws IllegalArgumentException if the method name is blank or the clazz is null
@@ -885,7 +905,7 @@ public abstract class ClassUtils {
 	 */
 	public static Class<?> resolvePrimitiveIfNecessary(Class<?> clazz) {
 		Assert.notNull(clazz, "Class must not be null");
-		return (clazz.isPrimitive() && clazz != void.class? primitiveTypeToWrapperMap.get(clazz) : clazz);
+		return (clazz.isPrimitive() && clazz != void.class ? primitiveTypeToWrapperMap.get(clazz) : clazz);
 	}
 
 	/**
@@ -939,7 +959,7 @@ public abstract class ClassUtils {
 	 */
 	public static String convertResourcePathToClassName(String resourcePath) {
 		Assert.notNull(resourcePath, "Resource path must not be null");
-		return resourcePath.replace('/', '.');
+		return resourcePath.replace(PATH_SEPARATOR, PACKAGE_SEPARATOR);
 	}
 
 	/**
@@ -949,7 +969,7 @@ public abstract class ClassUtils {
 	 */
 	public static String convertClassNameToResourcePath(String className) {
 		Assert.notNull(className, "Class name must not be null");
-		return className.replace('.', '/');
+		return className.replace(PACKAGE_SEPARATOR, PATH_SEPARATOR);
 	}
 
 	/**
@@ -962,7 +982,7 @@ public abstract class ClassUtils {
 	 * loading a resource file that is in the same package as a class file,
 	 * although {@link org.springframework.core.io.ClassPathResource} is usually
 	 * even more convenient.
-	 * @param clazz    the Class whose package will be used as the base
+	 * @param clazz the Class whose package will be used as the base
 	 * @param resourceName the resource name to append. A leading slash is optional.
 	 * @return the built-up resource path
 	 * @see ClassLoader#getResource
@@ -995,12 +1015,12 @@ public abstract class ClassUtils {
 			return "";
 		}
 		String className = clazz.getName();
-		int packageEndIndex = className.lastIndexOf('.');
+		int packageEndIndex = className.lastIndexOf(PACKAGE_SEPARATOR);
 		if (packageEndIndex == -1) {
 			return "";
 		}
 		String packageName = className.substring(0, packageEndIndex);
-		return packageName.replace('.', '/');
+		return packageName.replace(PACKAGE_SEPARATOR, PATH_SEPARATOR);
 	}
 
 	/**
@@ -1149,7 +1169,6 @@ public abstract class ClassUtils {
 	 */
 	public static Class<?> createCompositeInterface(Class<?>[] interfaces, ClassLoader classLoader) {
 		Assert.notEmpty(interfaces, "Interfaces must not be empty");
-		Assert.notNull(classLoader, "ClassLoader must not be null");
 		return Proxy.getProxyClass(classLoader, interfaces);
 	}
 
@@ -1213,7 +1232,7 @@ public abstract class ClassUtils {
 	 * @see org.springframework.aop.support.AopUtils#isCglibProxy(Object)
 	 */
 	public static boolean isCglibProxy(Object object) {
-		return ClassUtils.isCglibProxyClass(object.getClass());
+		return isCglibProxyClass(object.getClass());
 	}
 
 	/**

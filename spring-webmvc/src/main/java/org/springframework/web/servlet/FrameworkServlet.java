@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -814,15 +814,13 @@ public abstract class FrameworkServlet extends HttpServletBean {
 
 
 	/**
-	 * Override the parent class implementation in order to intercept PATCH
-	 * requests.
+	 * Override the parent class implementation in order to intercept PATCH requests.
 	 */
 	@Override
 	protected void service(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 
-		String method = request.getMethod();
-		if (method.equalsIgnoreCase(RequestMethod.PATCH.name())) {
+		if (RequestMethod.PATCH.name().equalsIgnoreCase(request.getMethod())) {
 			processRequest(request, response);
 		}
 		else {

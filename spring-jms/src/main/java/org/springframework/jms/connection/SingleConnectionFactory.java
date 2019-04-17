@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2012 the original author or authors.
+ * Copyright 2002-2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -73,9 +73,8 @@ import org.springframework.util.Assert;
  * @see org.springframework.jms.listener.SimpleMessageListenerContainer
  * @see org.springframework.jms.listener.DefaultMessageListenerContainer#setCacheLevel
  */
-public class SingleConnectionFactory
-		implements ConnectionFactory, QueueConnectionFactory, TopicConnectionFactory, ExceptionListener,
-		InitializingBean, DisposableBean {
+public class SingleConnectionFactory implements ConnectionFactory, QueueConnectionFactory,
+		TopicConnectionFactory, ExceptionListener, InitializingBean, DisposableBean {
 
 	protected final Log logger = LogFactory.getLog(getClass());
 
@@ -171,7 +170,7 @@ public class SingleConnectionFactory
 
 	/**
 	 * Specify an JMS ExceptionListener implementation that should be
-	 * registered with with the single Connection created by this factory.
+	 * registered with the single Connection created by this factory.
 	 * @see #setReconnectOnException
 	 */
 	public void setExceptionListener(ExceptionListener exceptionListener) {
@@ -180,7 +179,7 @@ public class SingleConnectionFactory
 
 	/**
 	 * Return the JMS ExceptionListener implementation that should be registered
-	 * with with the single Connection created by this factory, if any.
+	 * with the single Connection created by this factory, if any.
 	 */
 	protected ExceptionListener getExceptionListener() {
 		return this.exceptionListener;
@@ -307,6 +306,7 @@ public class SingleConnectionFactory
 	 * The provider of this ConnectionFactory needs to care for proper shutdown.
 	 * <p>As this bean implements DisposableBean, a bean factory will
 	 * automatically invoke this on destruction of its cached singletons.
+	 * @see #resetConnection()
 	 */
 	public void destroy() {
 		resetConnection();
@@ -314,6 +314,7 @@ public class SingleConnectionFactory
 
 	/**
 	 * Reset the underlying shared Connection, to be reinitialized on next access.
+	 * @see #closeConnection
 	 */
 	public void resetConnection() {
 		synchronized (this.connectionMonitor) {
@@ -384,7 +385,7 @@ public class SingleConnectionFactory
 
 	/**
 	 * Create a default Session for this ConnectionFactory,
-	 * adaptign to JMS 1.0.2 style queue/topic mode if necessary.
+	 * adapting to JMS 1.0.2 style queue/topic mode if necessary.
 	 * @param con the JMS Connection to operate on
 	 * @param mode the Session acknowledgement mode
 	 * ({@code Session.TRANSACTED} or one of the common modes)
@@ -443,7 +444,7 @@ public class SingleConnectionFactory
 	 * @return the wrapped Connection
 	 */
 	protected Connection getSharedConnectionProxy(Connection target) {
-		List<Class> classes = new ArrayList<Class>(3);
+		List<Class<?>> classes = new ArrayList<Class<?>>(3);
 		classes.add(Connection.class);
 		if (target instanceof QueueConnection) {
 			classes.add(QueueConnection.class);
@@ -453,7 +454,7 @@ public class SingleConnectionFactory
 		}
 		return (Connection) Proxy.newProxyInstance(
 				Connection.class.getClassLoader(),
-				classes.toArray(new Class[classes.size()]),
+				classes.toArray(new Class<?>[classes.size()]),
 				new SharedConnectionInvocationHandler(target));
 	}
 

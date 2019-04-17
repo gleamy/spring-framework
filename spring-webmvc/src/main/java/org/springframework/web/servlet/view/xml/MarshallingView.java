@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,7 +25,6 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.springframework.oxm.Marshaller;
 import org.springframework.util.Assert;
-import org.springframework.util.StreamUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.servlet.View;
 import org.springframework.web.servlet.view.AbstractView;
@@ -105,13 +104,12 @@ public class MarshallingView extends AbstractView {
 		if (toBeMarshalled == null) {
 			throw new ServletException("Unable to locate object to be marshalled in model: " + model);
 		}
-		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
-		this.marshaller.marshal(toBeMarshalled, new StreamResult(bos));
+		ByteArrayOutputStream baos = new ByteArrayOutputStream(1024);
+		this.marshaller.marshal(toBeMarshalled, new StreamResult(baos));
 
 		setResponseContentType(request, response);
-		response.setContentLength(bos.size());
-
-		StreamUtils.copy(bos.toByteArray(), response.getOutputStream());
+		response.setContentLength(baos.size());
+		baos.writeTo(response.getOutputStream());
 	}
 
 	/**

@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2013 the original author or authors.
+ * Copyright 2002-2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -65,11 +65,12 @@ class DisposableBeanAdapter implements DisposableBean, Runnable, Serializable {
 
 	private static final Log logger = LogFactory.getLog(DisposableBeanAdapter.class);
 
-	private static Class closeableInterface;
+	private static Class<?> closeableInterface;
 
 	static {
 		try {
-			closeableInterface = DisposableBeanAdapter.class.getClassLoader().loadClass("java.lang.AutoCloseable");
+			closeableInterface = ClassUtils.forName("java.lang.AutoCloseable",
+					DisposableBeanAdapter.class.getClassLoader());
 		}
 		catch (ClassNotFoundException ex) {
 			closeableInterface = Closeable.class;
@@ -85,13 +86,13 @@ class DisposableBeanAdapter implements DisposableBean, Runnable, Serializable {
 
 	private final boolean nonPublicAccessAllowed;
 
+	private final AccessControlContext acc;
+
 	private String destroyMethodName;
 
 	private transient Method destroyMethod;
 
 	private List<DestructionAwareBeanPostProcessor> beanPostProcessors;
-
-	private final AccessControlContext acc;
 
 
 	/**
@@ -149,9 +150,9 @@ class DisposableBeanAdapter implements DisposableBean, Runnable, Serializable {
 		this.beanName = beanName;
 		this.invokeDisposableBean = invokeDisposableBean;
 		this.nonPublicAccessAllowed = nonPublicAccessAllowed;
+		this.acc = null;
 		this.destroyMethodName = destroyMethodName;
 		this.beanPostProcessors = postProcessors;
-		this.acc = null;
 	}
 
 

@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2013 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -72,7 +72,7 @@ import org.springframework.web.servlet.mvc.support.DefaultHandlerExceptionResolv
 
 /**
  * A {@link BeanDefinitionParser} that provides the configuration for the
- * {@code <annotation-driven/>} MVC namespace  element.
+ * {@code <annotation-driven/>} MVC namespace element.
  *
  * <p>This class registers the following {@link HandlerMapping}s:</p>
  * <ul>
@@ -129,6 +129,9 @@ class AnnotationDrivenBeanDefinitionParser implements BeanDefinitionParser {
 	private static final boolean javaxValidationPresent = ClassUtils.isPresent(
 			"javax.validation.Validator", AnnotationDrivenBeanDefinitionParser.class.getClassLoader());
 
+	private static boolean romePresent =
+			ClassUtils.isPresent("com.sun.syndication.feed.WireFeed", AnnotationDrivenBeanDefinitionParser.class.getClassLoader());
+
 	private static final boolean jaxb2Present =
 			ClassUtils.isPresent("javax.xml.bind.Binder", AnnotationDrivenBeanDefinitionParser.class.getClassLoader());
 
@@ -139,9 +142,6 @@ class AnnotationDrivenBeanDefinitionParser implements BeanDefinitionParser {
 	private static final boolean jacksonPresent =
 			ClassUtils.isPresent("org.codehaus.jackson.map.ObjectMapper", AnnotationDrivenBeanDefinitionParser.class.getClassLoader()) &&
 					ClassUtils.isPresent("org.codehaus.jackson.JsonGenerator", AnnotationDrivenBeanDefinitionParser.class.getClassLoader());
-
-	private static boolean romePresent =
-			ClassUtils.isPresent("com.sun.syndication.feed.WireFeed", AnnotationDrivenBeanDefinitionParser.class.getClassLoader());
 
 
 	public BeanDefinition parse(Element element, ParserContext parserContext) {
@@ -162,6 +162,8 @@ class AnnotationDrivenBeanDefinitionParser implements BeanDefinitionParser {
 			Boolean enableMatrixVariables = Boolean.valueOf(element.getAttribute("enableMatrixVariables"));
 			handlerMappingDef.getPropertyValues().add("removeSemicolonContent", !enableMatrixVariables);
 		}
+
+		configurePathMatchingProperties(handlerMappingDef, element, parserContext);
 
 		RuntimeBeanReference conversionService = getConversionService(element, source, parserContext);
 		RuntimeBeanReference validator = getValidator(element, source, parserContext);
@@ -309,17 +311,51 @@ class AnnotationDrivenBeanDefinitionParser implements BeanDefinitionParser {
 		return contentNegotiationManagerRef;
 	}
 
+	private void configurePathMatchingProperties(RootBeanDefinition handlerMappingDef, Element element,
+			ParserContext parserContext) {
+
+		Element pathMatchingElement = DomUtils.getChildElementByTagName(element, "path-matching");
+		if (pathMatchingElement != null) {
+			Object source = parserContext.extractSource(element);
+			if (pathMatchingElement.hasAttribute("suffix-pattern")) {
+				Boolean useSuffixPatternMatch = Boolean.valueOf(pathMatchingElement.getAttribute("suffix-pattern"));
+				handlerMappingDef.getPropertyValues().add("useSuffixPatternMatch", useSuffixPatternMatch);
+			}
+			if (pathMatchingElement.hasAttribute("trailing-slash")) {
+				Boolean useTrailingSlashMatch = Boolean.valueOf(pathMatchingElement.getAttribute("trailing-slash"));
+				handlerMappingDef.getPropertyValues().add("useTrailingSlashMatch", useTrailingSlashMatch);
+			}
+			if (pathMatchingElement.hasAttribute("registered-suffixes-only")) {
+				Boolean useRegisteredSuffixPatternMatch = Boolean.valueOf(pathMatchingElement.getAttribute("registered-suffixes-only"));
+				handlerMappingDef.getPropertyValues().add("useRegisteredSuffixPatternMatch", useRegisteredSuffixPatternMatch);
+			}
+			RuntimeBeanReference pathHelperRef = null;
+			if (pathMatchingElement.hasAttribute("path-helper")) {
+				pathHelperRef = new RuntimeBeanReference(pathMatchingElement.getAttribute("path-helper"));
+			}
+			pathHelperRef = MvcNamespaceUtils.registerUrlPathHelper(pathHelperRef, parserContext, source);
+			handlerMappingDef.getPropertyValues().add("urlPathHelper", pathHelperRef);
+
+			RuntimeBeanReference pathMatcherRef = null;
+			if (pathMatchingElement.hasAttribute("path-matcher")) {
+				pathMatcherRef = new RuntimeBeanReference(pathMatchingElement.getAttribute("path-matcher"));
+			}
+			pathMatcherRef = MvcNamespaceUtils.registerPathMatcher(pathMatcherRef, parserContext, source);
+			handlerMappingDef.getPropertyValues().add("pathMatcher", pathMatcherRef);
+		}
+	}
+
 	private Properties getDefaultMediaTypes() {
 		Properties props = new Properties();
 		if (romePresent) {
 			props.put("atom", MediaType.APPLICATION_ATOM_XML_VALUE);
 			props.put("rss", "application/rss+xml");
 		}
-		if (jackson2Present || jacksonPresent) {
-			props.put("json", MediaType.APPLICATION_JSON_VALUE);
-		}
 		if (jaxb2Present) {
 			props.put("xml", MediaType.APPLICATION_XML_VALUE);
+		}
+		if (jackson2Present || jacksonPresent) {
+			props.put("json", MediaType.APPLICATION_JSON_VALUE);
 		}
 		return props;
 	}
@@ -429,7 +465,6 @@ class AnnotationDrivenBeanDefinitionParser implements BeanDefinitionParser {
 			if (jaxb2Present) {
 				messageConverters.add(createConverterDefinition(Jaxb2RootElementHttpMessageConverter.class, source));
 			}
-
 			if (jackson2Present) {
 				messageConverters.add(createConverterDefinition(MappingJackson2HttpMessageConverter.class, source));
 			}

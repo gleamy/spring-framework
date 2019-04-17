@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2012 the original author or authors.
+ * Copyright 2002-2015 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,7 +20,6 @@ import java.beans.PropertyEditor;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 
@@ -48,8 +47,8 @@ import org.springframework.web.util.WebUtils;
  * type {@link MultipartFile} in conjunction with Spring's {@link MultipartResolver}
  * abstraction, and arguments of type {@code javax.servlet.http.Part} in conjunction
  * with Servlet 3.0 multipart requests. This resolver can also be created in default
- * resolution mode in which simple types (int, long, etc.) not annotated
- * with @{@link RequestParam} are also treated as request parameters with the
+ * resolution mode in which simple types (int, long, etc.) not annotated with
+ * @{@link RequestParam} are also treated as request parameters with the
  * parameter name derived from the argument name.
  *
  * <p>If the method parameter type is {@link Map}, the name specified in the
@@ -72,34 +71,35 @@ public class RequestParamMethodArgumentResolver extends AbstractNamedValueMethod
 
 	private final boolean useDefaultResolution;
 
+
 	/**
 	 * @param beanFactory a bean factory used for resolving  ${...} placeholder
 	 * and #{...} SpEL expressions in default values, or {@code null} if default
 	 * values are not expected to contain expressions
 	 * @param useDefaultResolution in default resolution mode a method argument
 	 * that is a simple type, as defined in {@link BeanUtils#isSimpleProperty},
-	 * is treated as a request parameter even if it itsn't annotated, the
+	 * is treated as a request parameter even if it it isn't annotated, the
 	 * request parameter name is derived from the method parameter name.
 	 */
-	public RequestParamMethodArgumentResolver(ConfigurableBeanFactory beanFactory,
-											  boolean useDefaultResolution) {
+	public RequestParamMethodArgumentResolver(ConfigurableBeanFactory beanFactory, boolean useDefaultResolution) {
 		super(beanFactory);
 		this.useDefaultResolution = useDefaultResolution;
 	}
 
+
 	/**
 	 * Supports the following:
 	 * <ul>
-	 * 	<li>@RequestParam-annotated method arguments.
-	 * 		This excludes {@link Map} params where the annotation doesn't
-	 * 		specify a name.	See {@link RequestParamMapMethodArgumentResolver}
-	 * 		instead for such params.
-	 * 	<li>Arguments of type {@link MultipartFile}
-	 * 		unless annotated with @{@link RequestPart}.
-	 * 	<li>Arguments of type {@code javax.servlet.http.Part}
-	 * 		unless annotated with @{@link RequestPart}.
-	 * 	<li>In default resolution mode, simple type arguments
-	 * 		even if not with @{@link RequestParam}.
+	 * <li>@RequestParam-annotated method arguments.
+	 * This excludes {@link Map} params where the annotation doesn't
+	 * specify a name.	See {@link RequestParamMapMethodArgumentResolver}
+	 * instead for such params.
+	 * <li>Arguments of type {@link MultipartFile}
+	 * unless annotated with @{@link RequestPart}.
+	 * <li>Arguments of type {@code javax.servlet.http.Part}
+	 * unless annotated with @{@link RequestPart}.
+	 * <li>In default resolution mode, simple type arguments
+	 * even if not with @{@link RequestParam}.
 	 * </ul>
 	 */
 	public boolean supportsParameter(MethodParameter parameter) {
@@ -131,20 +131,16 @@ public class RequestParamMethodArgumentResolver extends AbstractNamedValueMethod
 
 	@Override
 	protected NamedValueInfo createNamedValueInfo(MethodParameter parameter) {
-		RequestParam annotation = parameter.getParameterAnnotation(RequestParam.class);
-		return (annotation != null) ?
-				new RequestParamNamedValueInfo(annotation) :
-				new RequestParamNamedValueInfo();
+		RequestParam ann = parameter.getParameterAnnotation(RequestParam.class);
+		return (ann != null ? new RequestParamNamedValueInfo(ann) : new RequestParamNamedValueInfo());
 	}
 
 	@Override
 	protected Object resolveName(String name, MethodParameter parameter, NativeWebRequest webRequest) throws Exception {
-
-		Object arg;
-
 		HttpServletRequest servletRequest = webRequest.getNativeRequest(HttpServletRequest.class);
 		MultipartHttpServletRequest multipartRequest =
-			WebUtils.getNativeRequest(servletRequest, MultipartHttpServletRequest.class);
+				WebUtils.getNativeRequest(servletRequest, MultipartHttpServletRequest.class);
+		Object arg;
 
 		if (MultipartFile.class.equals(parameter.getParameterType())) {
 			assertIsMultipartRequest(servletRequest);
@@ -171,7 +167,7 @@ public class RequestParamMethodArgumentResolver extends AbstractNamedValueMethod
 			if (arg == null) {
 				String[] paramValues = webRequest.getParameterValues(name);
 				if (paramValues != null) {
-					arg = paramValues.length == 1 ? paramValues[0] : paramValues;
+					arg = (paramValues.length == 1 ? paramValues[0] : paramValues);
 				}
 			}
 		}
@@ -190,7 +186,7 @@ public class RequestParamMethodArgumentResolver extends AbstractNamedValueMethod
 		Class<?> paramType = parameter.getParameterType();
 		if (Collection.class.equals(paramType) || List.class.isAssignableFrom(paramType)){
 			Class<?> valueType = GenericCollectionTypeResolver.getCollectionParameterType(parameter);
-			if (valueType != null && valueType.equals(MultipartFile.class)) {
+			if (MultipartFile.class.equals(valueType)) {
 				return true;
 			}
 		}
@@ -202,13 +198,14 @@ public class RequestParamMethodArgumentResolver extends AbstractNamedValueMethod
 		throw new MissingServletRequestParameterException(paramName, parameter.getParameterType().getSimpleName());
 	}
 
-	private class RequestParamNamedValueInfo extends NamedValueInfo {
 
-		private RequestParamNamedValueInfo() {
+	private static class RequestParamNamedValueInfo extends NamedValueInfo {
+
+		public RequestParamNamedValueInfo() {
 			super("", false, ValueConstants.DEFAULT_NONE);
 		}
 
-		private RequestParamNamedValueInfo(RequestParam annotation) {
+		public RequestParamNamedValueInfo(RequestParam annotation) {
 			super(annotation.value(), annotation.required(), annotation.defaultValue());
 		}
 	}

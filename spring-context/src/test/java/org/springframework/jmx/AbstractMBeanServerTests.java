@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2013 the original author or authors.
+ * Copyright 2002-2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,6 +22,7 @@ import javax.management.ObjectName;
 
 import org.junit.After;
 import org.junit.Before;
+
 import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.support.GenericApplicationContext;
@@ -36,7 +37,7 @@ import static org.junit.Assert.*;
  * run only if {@link TestGroup#JMXMP} is enabled. If you wish to run these tests, follow
  * the instructions in the TestGroup class to enable JMXMP tests. If you run into the
  * <em>"Unsupported protocol: jmxmp"</em> error, you will need to download the
- * <a href="http://www.oracle.com/technetwork/java/javase/tech/download-jsp-141676.html">
+ * <a href="https://www.oracle.com/technetwork/java/javase/tech/download-jsp-141676.html">
  * JMX Remote API 1.0.1_04 Reference Implementation</a> from Oracle and extract
  * {@code jmxremote_optional.jar} into your classpath, for example in the {@code lib/ext}
  * folder of your JVM.
@@ -51,12 +52,14 @@ public abstract class AbstractMBeanServerTests {
 
 	protected MBeanServer server;
 
+
 	@Before
 	public final void setUp() throws Exception {
 		this.server = MBeanServerFactory.createMBeanServer();
 		try {
 			onSetUp();
-		} catch (Exception ex) {
+		}
+		catch (Exception ex) {
 			releaseServer();
 			throw ex;
 		}

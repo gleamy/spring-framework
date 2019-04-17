@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2013 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,8 +23,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Test;
+
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
@@ -39,15 +41,37 @@ public class UriComponentsBuilderTests {
 	@Test
 	public void plain() throws URISyntaxException {
 		UriComponentsBuilder builder = UriComponentsBuilder.newInstance();
-		UriComponents result = builder.scheme("http").host("example.com").path("foo").queryParam("bar").fragment("baz").build();
-		assertEquals("http", result.getScheme());
+		UriComponents result = builder.scheme("https").host("example.com").path("foo").queryParam("bar").fragment("baz").build();
+		assertEquals("https", result.getScheme());
 		assertEquals("example.com", result.getHost());
 		assertEquals("foo", result.getPath());
 		assertEquals("bar", result.getQuery());
 		assertEquals("baz", result.getFragment());
 
-		URI expected = new URI("http://example.com/foo?bar#baz");
+		URI expected = new URI("https://example.com/foo?bar#baz");
 		assertEquals("Invalid result URI", expected, result.toUri());
+	}
+
+	@Test
+	public void multipleFromSameBuilder() throws URISyntaxException {
+		UriComponentsBuilder builder = UriComponentsBuilder.newInstance().scheme("https").host("example.com").pathSegment("foo");
+		UriComponents result1 = builder.build();
+		builder = builder.pathSegment("foo2").queryParam("bar").fragment("baz");
+		UriComponents result2 = builder.build();
+
+		assertEquals("https", result1.getScheme());
+		assertEquals("example.com", result1.getHost());
+		assertEquals("/foo", result1.getPath());
+		URI expected = new URI("https://example.com/foo");
+		assertEquals("Invalid result URI", expected, result1.toUri());
+
+		assertEquals("https", result2.getScheme());
+		assertEquals("example.com", result2.getHost());
+		assertEquals("/foo/foo2", result2.getPath());
+		assertEquals("bar", result2.getQuery());
+		assertEquals("baz", result2.getFragment());
+		expected = new URI("https://example.com/foo/foo2?bar#baz");
+		assertEquals("Invalid result URI", expected, result2.toUri());
 	}
 
 	@Test
@@ -71,9 +95,9 @@ public class UriComponentsBuilderTests {
 
 	@Test
 	public void fromHierarchicalUri() throws URISyntaxException {
-		URI uri = new URI("http://example.com/foo?bar#baz");
+		URI uri = new URI("https://example.com/foo?bar#baz");
 		UriComponents result = UriComponentsBuilder.fromUri(uri).build();
-		assertEquals("http", result.getScheme());
+		assertEquals("https", result.getScheme());
 		assertEquals("example.com", result.getHost());
 		assertEquals("/foo", result.getPath());
 		assertEquals("bar", result.getQuery());
@@ -97,7 +121,7 @@ public class UriComponentsBuilderTests {
 
 	@Test
 	public void fromUriEncodedQuery() throws URISyntaxException {
-		URI uri = new URI("http://www.example.org/?param=aGVsbG9Xb3JsZA%3D%3D");
+		URI uri = new URI("https://www.example.org/?param=aGVsbG9Xb3JsZA%3D%3D");
 		String fromUri = UriComponentsBuilder.fromUri(uri).build().getQueryParams().get("param").get(0);
 		String fromUriString = UriComponentsBuilder.fromUriString(uri.toString()).build().getQueryParams().get("param").get(0);
 
@@ -106,8 +130,8 @@ public class UriComponentsBuilderTests {
 
 	@Test
 	public void fromUriString() {
-		UriComponents result = UriComponentsBuilder.fromUriString("http://www.ietf.org/rfc/rfc3986.txt").build();
-		assertEquals("http", result.getScheme());
+		UriComponents result = UriComponentsBuilder.fromUriString("https://www.ietf.org/rfc/rfc3986.txt").build();
+		assertEquals("https", result.getScheme());
 		assertNull(result.getUserInfo());
 		assertEquals("www.ietf.org", result.getHost());
 		assertEquals(-1, result.getPort());
@@ -117,9 +141,9 @@ public class UriComponentsBuilderTests {
 		assertNull(result.getFragment());
 
 		result = UriComponentsBuilder.fromUriString(
-				"http://arjen:foobar@java.sun.com:80/javase/6/docs/api/java/util/BitSet.html?foo=bar#and(java.util.BitSet)")
+				"https://arjen:foobar@java.sun.com:80/javase/6/docs/api/java/util/BitSet.html?foo=bar#and(java.util.BitSet)")
 				.build();
-		assertEquals("http", result.getScheme());
+		assertEquals("https", result.getScheme());
 		assertEquals("arjen:foobar", result.getUserInfo());
 		assertEquals("java.sun.com", result.getHost());
 		assertEquals(80, result.getPort());
@@ -154,7 +178,7 @@ public class UriComponentsBuilderTests {
 
 	@Test
 	public void fromUriStringQueryParamWithReservedCharInValue() throws URISyntaxException {
-		String uri = "http://www.google.com/ig/calculator?q=1USD=?EUR";
+		String uri = "https://www.google.com/ig/calculator?q=1USD=?EUR";
 		UriComponents result = UriComponentsBuilder.fromUriString(uri).build();
 
 		assertEquals("q=1USD=?EUR", result.getQuery());
@@ -167,6 +191,17 @@ public class UriComponentsBuilderTests {
 	public void fromHttpUrlStringCaseInsesitiveScheme() {
 		assertEquals("http", UriComponentsBuilder.fromHttpUrl("HTTP://www.google.com").build().getScheme());
 		assertEquals("https", UriComponentsBuilder.fromHttpUrl("HTTPS://www.google.com").build().getScheme());
+	}
+
+	// SPR-11970
+
+	@Test
+	public void fromUriStringNoPathWithReservedCharInQuery() {
+		UriComponents result = UriComponentsBuilder.fromUriString("https://example.com?foo=bar@baz").build();
+		assertTrue(StringUtils.isEmpty(result.getUserInfo()));
+		assertEquals("example.com", result.getHost());
+		assertTrue(result.getQueryParams().containsKey("foo"));
+		assertEquals("bar@baz", result.getQueryParams().getFirst("foo"));
 	}
 
 	@Test
@@ -234,32 +269,32 @@ public class UriComponentsBuilderTests {
 
 	@Test
 	public void replacePath() {
-		UriComponentsBuilder builder = UriComponentsBuilder.fromUriString("http://www.ietf.org/rfc/rfc2396.txt");
+		UriComponentsBuilder builder = UriComponentsBuilder.fromUriString("https://www.ietf.org/rfc/rfc2396.txt");
 		builder.replacePath("/rfc/rfc3986.txt");
 		UriComponents result = builder.build();
 
-		assertEquals("http://www.ietf.org/rfc/rfc3986.txt", result.toUriString());
+		assertEquals("https://www.ietf.org/rfc/rfc3986.txt", result.toUriString());
 
-		builder = UriComponentsBuilder.fromUriString("http://www.ietf.org/rfc/rfc2396.txt");
+		builder = UriComponentsBuilder.fromUriString("https://www.ietf.org/rfc/rfc2396.txt");
 		builder.replacePath(null);
 		result = builder.build();
 
-		assertEquals("http://www.ietf.org", result.toUriString());
+		assertEquals("https://www.ietf.org", result.toUriString());
 	}
 
 	@Test
 	public void replaceQuery() {
-		UriComponentsBuilder builder = UriComponentsBuilder.fromUriString("http://example.com/foo?foo=bar&baz=qux");
+		UriComponentsBuilder builder = UriComponentsBuilder.fromUriString("https://example.com/foo?foo=bar&baz=qux");
 		builder.replaceQuery("baz=42");
 		UriComponents result = builder.build();
 
-		assertEquals("http://example.com/foo?baz=42", result.toUriString());
+		assertEquals("https://example.com/foo?baz=42", result.toUriString());
 
-		builder = UriComponentsBuilder.fromUriString("http://example.com/foo?foo=bar&baz=qux");
+		builder = UriComponentsBuilder.fromUriString("https://example.com/foo?foo=bar&baz=qux");
 		builder.replaceQuery(null);
 		result = builder.build();
 
-		assertEquals("http://example.com/foo", result.toUriString());
+		assertEquals("https://example.com/foo", result.toUriString());
 	}
 
 	@Test
@@ -326,41 +361,41 @@ public class UriComponentsBuilderTests {
 
 	@Test
 	public void queryParamWithValueWithEquals() throws Exception {
-		UriComponents uriComponents = UriComponentsBuilder.fromUriString("http://example.com/foo?bar=baz").build();
-		assertThat(uriComponents.toUriString(), equalTo("http://example.com/foo?bar=baz"));
+		UriComponents uriComponents = UriComponentsBuilder.fromUriString("https://example.com/foo?bar=baz").build();
+		assertThat(uriComponents.toUriString(), equalTo("https://example.com/foo?bar=baz"));
 	}
 
 	@Test
 	public void queryParamWithoutValueWithEquals() throws Exception {
-		UriComponents uriComponents = UriComponentsBuilder.fromUriString("http://example.com/foo?bar=").build();
-		assertThat(uriComponents.toUriString(), equalTo("http://example.com/foo?bar="));
+		UriComponents uriComponents = UriComponentsBuilder.fromUriString("https://example.com/foo?bar=").build();
+		assertThat(uriComponents.toUriString(), equalTo("https://example.com/foo?bar="));
 	}
 
 	@Test
 	public void queryParamWithoutValueWithoutEquals() throws Exception {
-		UriComponents uriComponents = UriComponentsBuilder.fromUriString("http://example.com/foo?bar").build();
-		assertThat(uriComponents.toUriString(), equalTo("http://example.com/foo?bar"));
+		UriComponents uriComponents = UriComponentsBuilder.fromUriString("https://example.com/foo?bar").build();
+		assertThat(uriComponents.toUriString(), equalTo("https://example.com/foo?bar"));
 	}
 
 	@Test
 	public void relativeUrls() throws Exception {
-		assertThat(UriComponentsBuilder.fromUriString("http://example.com/foo/../bar").build().toString(), equalTo("http://example.com/foo/../bar"));
-		assertThat(UriComponentsBuilder.fromUriString("http://example.com/foo/../bar").build().toUriString(), equalTo("http://example.com/foo/../bar"));
-		assertThat(UriComponentsBuilder.fromUriString("http://example.com/foo/../bar").build().toUri().getPath(), equalTo("/foo/../bar"));
+		assertThat(UriComponentsBuilder.fromUriString("https://example.com/foo/../bar").build().toString(), equalTo("https://example.com/foo/../bar"));
+		assertThat(UriComponentsBuilder.fromUriString("https://example.com/foo/../bar").build().toUriString(), equalTo("https://example.com/foo/../bar"));
+		assertThat(UriComponentsBuilder.fromUriString("https://example.com/foo/../bar").build().toUri().getPath(), equalTo("/foo/../bar"));
 		assertThat(UriComponentsBuilder.fromUriString("../../").build().toString(), equalTo("../../"));
 		assertThat(UriComponentsBuilder.fromUriString("../../").build().toUriString(), equalTo("../../"));
 		assertThat(UriComponentsBuilder.fromUriString("../../").build().toUri().getPath(), equalTo("../../"));
-		assertThat(UriComponentsBuilder.fromUriString("http://example.com").path("foo/../bar").build().toString(), equalTo("http://example.com/foo/../bar"));
-		assertThat(UriComponentsBuilder.fromUriString("http://example.com").path("foo/../bar").build().toUriString(), equalTo("http://example.com/foo/../bar"));
-		assertThat(UriComponentsBuilder.fromUriString("http://example.com").path("foo/../bar").build().toUri().getPath(), equalTo("/foo/../bar"));
+		assertThat(UriComponentsBuilder.fromUriString("https://example.com").path("foo/../bar").build().toString(), equalTo("https://example.com/foo/../bar"));
+		assertThat(UriComponentsBuilder.fromUriString("https://example.com").path("foo/../bar").build().toUriString(), equalTo("https://example.com/foo/../bar"));
+		assertThat(UriComponentsBuilder.fromUriString("https://example.com").path("foo/../bar").build().toUri().getPath(), equalTo("/foo/../bar"));
 	}
 
 	@Test
 	public void emptySegments() throws Exception {
-		assertThat(UriComponentsBuilder.fromUriString("http://example.com/abc/").path("/x/y/z").build().toString(), equalTo("http://example.com/abc/x/y/z"));
-	    assertThat(UriComponentsBuilder.fromUriString("http://example.com/abc/").pathSegment("x", "y", "z").build().toString(), equalTo("http://example.com/abc/x/y/z"));
-		assertThat(UriComponentsBuilder.fromUriString("http://example.com/abc/").path("/x/").path("/y/z").build().toString(), equalTo("http://example.com/abc/x/y/z"));
-		assertThat(UriComponentsBuilder.fromUriString("http://example.com/abc/").pathSegment("x").path("y").build().toString(), equalTo("http://example.com/abc/x/y"));
+		assertThat(UriComponentsBuilder.fromUriString("https://example.com/abc/").path("/x/y/z").build().toString(), equalTo("https://example.com/abc/x/y/z"));
+	    assertThat(UriComponentsBuilder.fromUriString("https://example.com/abc/").pathSegment("x", "y", "z").build().toString(), equalTo("https://example.com/abc/x/y/z"));
+		assertThat(UriComponentsBuilder.fromUriString("https://example.com/abc/").path("/x/").path("/y/z").build().toString(), equalTo("https://example.com/abc/x/y/z"));
+		assertThat(UriComponentsBuilder.fromUriString("https://example.com/abc/").pathSegment("x").path("y").build().toString(), equalTo("https://example.com/abc/x/y"));
 	}
 
 	@Test

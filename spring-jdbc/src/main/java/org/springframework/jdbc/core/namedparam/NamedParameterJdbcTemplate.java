@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2013 the original author or authors.
+ * Copyright 2002-2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -51,6 +51,8 @@ import org.springframework.util.Assert;
  * <p>The underlying {@link org.springframework.jdbc.core.JdbcTemplate} is
  * exposed to allow for convenient access to the traditional
  * {@link org.springframework.jdbc.core.JdbcTemplate} methods.
+ *
+ * <p><b>NOTE: An instance of this class is thread-safe once configured.</b>
  *
  * @author Thomas Risberg
  * @author Juergen Hoeller
@@ -320,7 +322,7 @@ public class NamedParameterJdbcTemplate implements NamedParameterJdbcOperations 
 	}
 
 	public int[] batchUpdate(String sql, SqlParameterSource[] batchArgs) {
-		ParsedSql parsedSql = this.getParsedSql(sql);
+		ParsedSql parsedSql = getParsedSql(sql);
 		return NamedParameterBatchUpdateUtils.executeBatchUpdateWithNamedParameters(parsedSql, batchArgs, getJdbcOperations());
 	}
 

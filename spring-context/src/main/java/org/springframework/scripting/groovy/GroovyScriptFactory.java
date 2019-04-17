@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2013 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,7 +24,6 @@ import groovy.lang.MetaClass;
 import groovy.lang.Script;
 import org.codehaus.groovy.control.CompilationFailedException;
 
-import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanClassLoaderAware;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
@@ -99,7 +98,7 @@ public class GroovyScriptFactory implements ScriptFactory, BeanFactoryAware, Bea
 	}
 
 
-	public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
+	public void setBeanFactory(BeanFactory beanFactory) {
 		if (beanFactory instanceof ConfigurableListableBeanFactory) {
 			((ConfigurableListableBeanFactory) beanFactory).ignoreDependencyType(MetaClass.class);
 		}
@@ -151,10 +150,9 @@ public class GroovyScriptFactory implements ScriptFactory, BeanFactoryAware, Bea
 	public Object getScriptedObject(ScriptSource scriptSource, Class<?>... actualInterfaces)
 			throws IOException, ScriptCompilationException {
 
-		try {
-			Class<?> scriptClassToExecute;
-
-			synchronized (this.scriptClassMonitor) {
+		synchronized (this.scriptClassMonitor) {
+			try {
+				Class<?> scriptClassToExecute;
 				this.wasModifiedForTypeCheck = false;
 
 				if (this.cachedResult != null) {
@@ -179,21 +177,23 @@ public class GroovyScriptFactory implements ScriptFactory, BeanFactoryAware, Bea
 					}
 				}
 				scriptClassToExecute = this.scriptClass;
-			}
 
-			// Process re-execution outside of the synchronized block.
-			return executeScript(scriptSource, scriptClassToExecute);
-		}
-		catch (CompilationFailedException ex) {
-			throw new ScriptCompilationException(scriptSource, ex);
+				// Process re-execution outside of the synchronized block.
+				return executeScript(scriptSource, scriptClassToExecute);
+			}
+			catch (CompilationFailedException ex) {
+				this.scriptClass = null;
+				this.scriptResultClass = null;
+				throw new ScriptCompilationException(scriptSource, ex);
+			}
 		}
 	}
 
 	public Class<?> getScriptedObjectType(ScriptSource scriptSource)
 			throws IOException, ScriptCompilationException {
 
-		try {
-			synchronized (this.scriptClassMonitor) {
+		synchronized (this.scriptClassMonitor) {
+			try {
 				if (this.scriptClass == null || scriptSource.isModified()) {
 					// New script content...
 					this.wasModifiedForTypeCheck = true;
@@ -212,9 +212,12 @@ public class GroovyScriptFactory implements ScriptFactory, BeanFactoryAware, Bea
 				}
 				return this.scriptResultClass;
 			}
-		}
-		catch (CompilationFailedException ex) {
-			throw new ScriptCompilationException(scriptSource, ex);
+			catch (CompilationFailedException ex) {
+				this.scriptClass = null;
+				this.scriptResultClass = null;
+				this.cachedResult = null;
+				throw new ScriptCompilationException(scriptSource, ex);
+			}
 		}
 	}
 

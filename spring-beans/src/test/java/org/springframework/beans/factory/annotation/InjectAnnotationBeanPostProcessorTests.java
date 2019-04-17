@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -550,7 +550,7 @@ public class InjectAnnotationBeanPostProcessorTests {
 	 * Verifies that a dependency on a {@link org.springframework.beans.factory.FactoryBean} can be autowired via
 	 * {@link org.springframework.beans.factory.annotation.Autowired @Inject}, specifically addressing the JIRA issue
 	 * raised in <a
-	 * href="http://opensource.atlassian.com/projects/spring/browse/SPR-4040"
+	 * href="https://opensource.atlassian.com/projects/spring/browse/SPR-4040"
 	 * target="_blank">SPR-4040</a>.
 	 */
 	@Test

@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2012 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -50,6 +50,7 @@ import org.springframework.transaction.support.AbstractPlatformTransactionManage
 import org.springframework.transaction.support.DefaultTransactionStatus;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.util.Assert;
+import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
 /**
@@ -80,29 +81,28 @@ import org.springframework.util.StringUtils;
  * Almost all Java EE servers expose it, but do so as extension to EE. There might be some
  * issues with compatibility, despite the TransactionManager interface being part of JTA.
  * As a consequence, Spring provides various vendor-specific PlatformTransactionManagers,
- * which are recommended to be used if appropriate: {@link WebLogicJtaTransactionManager},
- * {@link WebSphereUowTransactionManager} and {@link OC4JJtaTransactionManager}.
- * For all other Java EE servers, the standard JtaTransactionManager is sufficient.
+ * which are recommended to be used if appropriate: {@link WebLogicJtaTransactionManager}
+ * and {@link WebSphereUowTransactionManager}. For all other Java EE servers, the
+ * standard JtaTransactionManager is sufficient.
  *
  * <p>This pure JtaTransactionManager class supports timeouts but not per-transaction
  * isolation levels. Custom subclasses may override the {@link #doJtaBegin} method for
- * specific JTA extensions in order to provide this functionality; Spring includes
- * corresponding {@link WebLogicJtaTransactionManager} and {@link OC4JJtaTransactionManager}
- * classes, for BEA's WebLogic Server and Oracle's OC4J, respectively. Such adapters
- * for specific Java EE transaction coordinators may also expose transaction names for
- * monitoring; with standard JTA, transaction names will simply be ignored.
+ * specific JTA extensions in order to provide this functionality; Spring includes a
+ * corresponding {@link WebLogicJtaTransactionManager} class for WebLogic Server. Such
+ * adapters for specific Java EE transaction coordinators may also expose transaction
+ * names for monitoring; with standard JTA, transaction names will simply be ignored.
  *
  * <p><b>Consider using Spring's {@code tx:jta-transaction-manager} configuration
  * element for automatically picking the appropriate JTA platform transaction manager
- * (automatically detecting WebLogic, WebSphere and OC4J).</b>
+ * (automatically detecting WebLogic and WebSphere).</b>
  *
  * <p>JTA 1.1 adds the TransactionSynchronizationRegistry facility, as public Java EE 5
  * API in addition to the standard JTA UserTransaction handle. As of Spring 2.5, this
  * JtaTransactionManager autodetects the TransactionSynchronizationRegistry and uses
  * it for registering Spring-managed synchronizations when participating in an existing
  * JTA transaction (e.g. controlled by EJB CMT). If no TransactionSynchronizationRegistry
- * is available (or the JTA 1.1 API isn't available), then such synchronizations
- * will be registered via the (non-EE) JTA TransactionManager handle.
+ * is available (or the JTA 1.1 API isn't available), then such synchronizations will be
+ * registered via the (non-EE) JTA TransactionManager handle.
  *
  * <p>This class is serializable. However, active synchronizations do not survive serialization.
  *
@@ -154,9 +154,9 @@ public class JtaTransactionManager extends AbstractPlatformTransactionManager
 	private static Class<?> transactionSynchronizationRegistryClass;
 
 	static {
-		ClassLoader cl = JtaTransactionManager.class.getClassLoader();
 		try {
-			transactionSynchronizationRegistryClass = cl.loadClass(TRANSACTION_SYNCHRONIZATION_REGISTRY_CLASS_NAME);
+			transactionSynchronizationRegistryClass = ClassUtils.forName(
+					TRANSACTION_SYNCHRONIZATION_REGISTRY_CLASS_NAME, JtaTransactionManager.class.getClassLoader());
 		}
 		catch (ClassNotFoundException ex) {
 			// JTA 1.1 API not available... simply proceed the JTA 1.0 way.
@@ -345,7 +345,7 @@ public class JtaTransactionManager extends AbstractPlatformTransactionManager
 	}
 
 	/**
-	 * Return the JTA TransactionManager that this transaction manager uses.
+	 * Return the JTA TransactionManager that this transaction manager uses, if any.
 	 */
 	public TransactionManager getTransactionManager() {
 		return this.transactionManager;
@@ -448,7 +448,7 @@ public class JtaTransactionManager extends AbstractPlatformTransactionManager
 		}
 
 		// Autodetect UserTransaction object that implements TransactionManager,
-		// and check fallback JNDI locations else.
+		// and check fallback JNDI locations otherwise.
 		if (this.transactionManager == null && this.autodetectTransactionManager) {
 			this.transactionManager = findTransactionManager(this.userTransaction);
 		}
@@ -737,8 +737,7 @@ public class JtaTransactionManager extends AbstractPlatformTransactionManager
 			}
 			catch (NamingException ex) {
 				if (logger.isDebugEnabled()) {
-					logger.debug(
-							"No JTA TransactionSynchronizationRegistry found at default JNDI location [" + jndiName + "]", ex);
+					logger.debug("No JTA TransactionSynchronizationRegistry found at default JNDI location [" + jndiName + "]", ex);
 				}
 			}
 		}
@@ -824,12 +823,12 @@ public class JtaTransactionManager extends AbstractPlatformTransactionManager
 		catch (NotSupportedException ex) {
 			// assume nested transaction not supported
 			throw new NestedTransactionNotSupportedException(
-				"JTA implementation does not support nested transactions", ex);
+					"JTA implementation does not support nested transactions", ex);
 		}
 		catch (UnsupportedOperationException ex) {
 			// assume nested transaction not supported
 			throw new NestedTransactionNotSupportedException(
-				"JTA implementation does not support nested transactions", ex);
+					"JTA implementation does not support nested transactions", ex);
 		}
 		catch (SystemException ex) {
 			throw new CannotCreateTransactionException("JTA failure on begin", ex);
@@ -884,8 +883,8 @@ public class JtaTransactionManager extends AbstractPlatformTransactionManager
 
 		if (!this.allowCustomIsolationLevels && isolationLevel != TransactionDefinition.ISOLATION_DEFAULT) {
 			throw new InvalidIsolationLevelException(
-				"JtaTransactionManager does not support custom isolation levels by default - " +
-				"switch 'allowCustomIsolationLevels' to 'true'");
+					"JtaTransactionManager does not support custom isolation levels by default - " +
+					"switch 'allowCustomIsolationLevels' to 'true'");
 		}
 	}
 

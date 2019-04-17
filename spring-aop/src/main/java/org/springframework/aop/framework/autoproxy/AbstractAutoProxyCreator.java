@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2012 the original author or authors.
+ * Copyright 2002-2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -198,7 +198,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyConfig
 	 * Ordering is significant: The TargetSource returned from the first matching
 	 * TargetSourceCreator (that is, the first that returns non-null) will be used.
 	 */
-	public void setCustomTargetSourceCreators(TargetSourceCreator[] targetSourceCreators) {
+	public void setCustomTargetSourceCreators(TargetSourceCreator... targetSourceCreators) {
 		this.customTargetSourceCreators = targetSourceCreators;
 	}
 
@@ -209,7 +209,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyConfig
 	 * This is perfectly valid, if "specific" interceptors such as matching
 	 * Advisors are all we want.
 	 */
-	public void setInterceptorNames(String[] interceptorNames) {
+	public void setInterceptorNames(String... interceptorNames) {
 		this.interceptorNames = interceptorNames;
 	}
 
@@ -262,7 +262,9 @@ public abstract class AbstractAutoProxyCreator extends ProxyConfig
 
 	public Object getEarlyBeanReference(Object bean, String beanName) throws BeansException {
 		Object cacheKey = getCacheKey(bean.getClass(), beanName);
-		this.earlyProxyReferences.put(cacheKey, Boolean.TRUE);
+		if (!this.earlyProxyReferences.containsKey(cacheKey)) {
+			this.earlyProxyReferences.put(cacheKey, Boolean.TRUE);
+		}
 		return wrapIfNecessary(bean, beanName, cacheKey);
 	}
 

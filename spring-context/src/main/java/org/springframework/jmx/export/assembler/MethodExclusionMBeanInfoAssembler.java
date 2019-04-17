@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2012 the original author or authors.
+ * Copyright 2002-2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -68,7 +68,7 @@ public class MethodExclusionMBeanInfoAssembler extends AbstractConfigurableMBean
 	 * that bean is found in the {@code ignoredMethodsMappings} property.
 	 * @see #setIgnoredMethodMappings(java.util.Properties)
 	 */
-	public void setIgnoredMethods(String[] ignoredMethodNames) {
+	public void setIgnoredMethods(String... ignoredMethodNames) {
 		this.ignoredMethods = new HashSet<String>(Arrays.asList(ignoredMethodNames));
 	}
 
@@ -81,7 +81,7 @@ public class MethodExclusionMBeanInfoAssembler extends AbstractConfigurableMBean
 	 */
 	public void setIgnoredMethodMappings(Properties mappings) {
 		this.ignoredMethodMappings = new HashMap<String, Set<String>>();
-		for (Enumeration en = mappings.keys(); en.hasMoreElements();) {
+		for (Enumeration<?> en = mappings.keys(); en.hasMoreElements();) {
 			String beanKey = (String) en.nextElement();
 			String[] methodNames = StringUtils.commaDelimitedListToStringArray(mappings.getProperty(beanKey));
 			this.ignoredMethodMappings.put(beanKey, new HashSet<String>(Arrays.asList(methodNames)));

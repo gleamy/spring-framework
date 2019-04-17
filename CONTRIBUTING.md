@@ -19,14 +19,6 @@ in our [JIRA issue tracker][] to see if you can find something similar. If not,
 please create a new issue before submitting a pull request unless the change is
 truly trivial, e.g. typo fixes, removing compiler warnings, etc.
 
-## Discuss non-trivial contribution ideas with committers
-
-If you're considering anything more than correcting a typo or fixing a minor
-bug, please discuss it on the [spring-framework-contrib][] mailing list before
-submitting a pull request. We're happy to provide guidance, but please spend an
-hour or two researching the subject on your own including searching the mailing
-list for prior discussions.
-
 ## Sign the Contributor License Agreement
 
 If you have not previously done so, please fill out and submit the
@@ -93,7 +85,7 @@ present in the framework.
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -168,7 +160,7 @@ public class Spr8954Tests {
 Use `git rebase --interactive`, `git add --patch` and other tools to "squash"
 multiple commits into atomic changes. In addition to the man pages for git,
 there are many resources online to help you understand how these tools work.
-Here is one: http://book.git-scm.com/4_interactive_rebasing.html.
+Here is one: https://book.git-scm.com/4_interactive_rebasing.html.
 
 
 ## Use real name in git commits
@@ -294,10 +286,10 @@ Note that you can always force push (`git push -f`) reworked / rebased commits
 against the branch used to submit your pull request. i.e. you do not need to
 issue a new pull request when asked to make changes.
 
-[help documentation]: http://help.github.com/send-pull-requests
+[help documentation]: https://help.github.com/send-pull-requests
 [JIRA issue tracker]: https://jira.springsource.org/browse/SPR
 [spring-framework-contrib]: https://groups.google.com/forum/#!forum/spring-framework-contrib
 [SpringSource CLA form]: https://support.springsource.com/spring_committer_signup
 [fork-and-edit]: https://github.com/blog/844-forking-with-the-edit-button
-[commit guidelines section of Pro Git]: http://progit.org/book/ch5-2.html#commit_guidelines
+[commit guidelines section of Pro Git]: https://progit.org/book/ch5-2.html#commit_guidelines
 [building from source]: https://github.com/SpringSource/spring-framework#building-from-source

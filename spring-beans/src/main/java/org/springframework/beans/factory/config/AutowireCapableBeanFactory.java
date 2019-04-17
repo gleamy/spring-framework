@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2012 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -114,9 +114,9 @@ public interface AutowireCapableBeanFactory extends BeanFactory {
 	 * <p>Performs full initialization of the bean, including all applicable
 	 * {@link BeanPostProcessor BeanPostProcessors}.
 	 * <p>Note: This is intended for creating a fresh instance, populating annotated
-	 * fields and methods as well as applying all standard bean initialiation callbacks.
+	 * fields and methods as well as applying all standard bean initialization callbacks.
 	 * It does <i>not</> imply traditional by-name or by-type autowiring of properties;
-	 * use {@link #createBean(Class, int, boolean)} for that purposes.
+	 * use {@link #createBean(Class, int, boolean)} for those purposes.
 	 * @param beanClass the class of the bean to create
 	 * @return the new bean instance
 	 * @throws BeansException if instantiation or wiring failed
@@ -129,7 +129,7 @@ public interface AutowireCapableBeanFactory extends BeanFactory {
 	 * <p>Note: This is essentially intended for (re-)populating annotated fields and
 	 * methods, either for new instances or for deserialized instances. It does
 	 * <i>not</i> imply traditional by-name or by-type autowiring of properties;
-	 * use {@link #autowireBeanProperties} for that purposes.
+	 * use {@link #autowireBeanProperties} for those purposes.
 	 * @param existingBean the existing bean instance
 	 * @throws BeansException if wiring failed
 	 */

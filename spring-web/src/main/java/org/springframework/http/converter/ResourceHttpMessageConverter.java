@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2013 the original author or authors.
+ * Copyright 2002-2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,12 +18,12 @@ package org.springframework.http.converter;
 
 import java.io.IOException;
 import java.io.InputStream;
-
 import javax.activation.FileTypeMap;
 import javax.activation.MimetypesFileTypeMap;
 
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpInputMessage;
 import org.springframework.http.HttpOutputMessage;
@@ -78,7 +78,9 @@ public class ResourceHttpMessageConverter extends AbstractHttpMessageConverter<R
 
 	@Override
 	protected Long getContentLength(Resource resource, MediaType contentType) throws IOException {
-		return resource.contentLength();
+		// Don't try to determine contentLength on InputStreamResource - cannot be read afterwards...
+		// Note: custom InputStreamResource subclasses could provide a pre-calculated content length!
+		return (InputStreamResource.class.equals(resource.getClass()) ? null : resource.contentLength());
 	}
 
 	@Override
@@ -138,7 +140,7 @@ public class ResourceHttpMessageConverter extends AbstractHttpMessageConverter<R
 		}
 
 		public static MediaType getMediaType(Resource resource) {
-			if(resource.getFilename() == null) {
+			if (resource.getFilename() == null) {
 				return null;
 			}
 			String mediaType = fileTypeMap.getContentType(resource.getFilename());

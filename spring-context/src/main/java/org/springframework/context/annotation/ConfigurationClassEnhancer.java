@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -240,9 +240,8 @@ class ConfigurationClassEnhancer {
 		/**
 		 * Enhance a {@link Bean @Bean} method to check the supplied BeanFactory for the
 		 * existence of this bean object.
-		 * @throws Throwable as a catch-all for any exception that may be thrown when
-		 * invoking the super implementation of the proxied method i.e., the actual
-		 * {@code @Bean} method.
+		 * @throws Throwable as a catch-all for any exception that may be thrown when invoking the
+		 * super implementation of the proxied method i.e., the actual {@code @Bean} method
 		 */
 		public Object intercept(Object enhancedConfigInstance, Method beanMethod, Object[] beanMethodArgs,
 					MethodProxy cglibMethodProxy) throws Throwable {
@@ -287,7 +286,7 @@ class ConfigurationClassEnhancer {
 							"result in a failure to process annotations such as @Autowired, " +
 							"@Resource and @PostConstruct within the method's declaring " +
 							"@Configuration class. Add the 'static' modifier to this method to avoid " +
-							"these container lifecycle issues; see @Bean Javadoc for complete details",
+							"these container lifecycle issues; see @Bean javadoc for complete details",
 							beanMethod.getDeclaringClass().getSimpleName(), beanMethod.getName()));
 				}
 				return cglibMethodProxy.invokeSuper(enhancedConfigInstance, beanMethodArgs);
@@ -360,7 +359,7 @@ class ConfigurationClassEnhancer {
 			};
 			enhancer.setCallbackTypes(CALLBACK_TYPES);
 			Class<?> fbSubclass = enhancer.createClass();
-			Enhancer.registerCallbacks(fbSubclass, callbackInstances);
+			Enhancer.registerStaticCallbacks(fbSubclass, callbackInstances);
 			return fbSubclass.newInstance();
 		}
 	}

@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2013 the original author or authors.
+ * Copyright 2002-2015 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -88,42 +88,39 @@ public class PropertyOrFieldReference extends SpelNodeImpl {
 		if (result.getValue() == null && isAutoGrowNullReferences &&
 				nextChildIs(Indexer.class, PropertyOrFieldReference.class)) {
 			TypeDescriptor resultDescriptor = result.getTypeDescriptor();
-			// Creating lists and maps
-			if ((resultDescriptor.getType().equals(List.class) || resultDescriptor.getType().equals(Map.class))) {
-				// Create a new collection or map ready for the indexer
-				if (resultDescriptor.getType().equals(List.class)) {
-					try {
-						if (isWritableProperty(this.name,contextObject,eContext)) {
-							List<?> newList = ArrayList.class.newInstance();
-							writeProperty(contextObject, eContext, this.name, newList);
-							result = readProperty(contextObject, eContext, this.name);
-						}
-					}
-					catch (InstantiationException ex) {
-						throw new SpelEvaluationException(getStartPosition(), ex,
-								SpelMessage.UNABLE_TO_CREATE_LIST_FOR_INDEXING);
-					}
-					catch (IllegalAccessException ex) {
-						throw new SpelEvaluationException(getStartPosition(), ex,
-								SpelMessage.UNABLE_TO_CREATE_LIST_FOR_INDEXING);
+			// Create a new collection or map ready for the indexer
+			if (List.class.equals(resultDescriptor.getType())) {
+				try {
+					if (isWritableProperty(this.name, contextObject, eContext)) {
+						List<?> newList = ArrayList.class.newInstance();
+						writeProperty(contextObject, eContext, this.name, newList);
+						result = readProperty(contextObject, eContext, this.name);
 					}
 				}
-				else {
-					try {
-						if (isWritableProperty(this.name,contextObject,eContext)) {
-							Map<?,?> newMap = HashMap.class.newInstance();
-							writeProperty(contextObject, eContext, this.name, newMap);
-							result = readProperty(contextObject, eContext, this.name);
-						}
+				catch (InstantiationException ex) {
+					throw new SpelEvaluationException(getStartPosition(), ex,
+							SpelMessage.UNABLE_TO_CREATE_LIST_FOR_INDEXING);
+				}
+				catch (IllegalAccessException ex) {
+					throw new SpelEvaluationException(getStartPosition(), ex,
+							SpelMessage.UNABLE_TO_CREATE_LIST_FOR_INDEXING);
+				}
+			}
+			else if (Map.class.equals(resultDescriptor.getType())) {
+				try {
+					if (isWritableProperty(this.name, contextObject, eContext)) {
+						Map<?,?> newMap = HashMap.class.newInstance();
+						writeProperty(contextObject, eContext, this.name, newMap);
+						result = readProperty(contextObject, eContext, this.name);
 					}
-					catch (InstantiationException ex) {
-						throw new SpelEvaluationException(getStartPosition(), ex,
-								SpelMessage.UNABLE_TO_CREATE_MAP_FOR_INDEXING);
-					}
-					catch (IllegalAccessException ex) {
-						throw new SpelEvaluationException(getStartPosition(), ex,
-								SpelMessage.UNABLE_TO_CREATE_MAP_FOR_INDEXING);
-					}
+				}
+				catch (InstantiationException ex) {
+					throw new SpelEvaluationException(getStartPosition(), ex,
+							SpelMessage.UNABLE_TO_CREATE_MAP_FOR_INDEXING);
+				}
+				catch (IllegalAccessException ex) {
+					throw new SpelEvaluationException(getStartPosition(), ex,
+							SpelMessage.UNABLE_TO_CREATE_MAP_FOR_INDEXING);
 				}
 			}
 			else {
@@ -186,9 +183,7 @@ public class PropertyOrFieldReference extends SpelNodeImpl {
 			}
 		}
 
-		Class<?> contextObjectClass = getObjectClass(contextObject.getValue());
-		List<PropertyAccessor> accessorsToTry = getPropertyAccessorsToTry(contextObjectClass, eContext.getPropertyAccessors());
-
+		List<PropertyAccessor> accessorsToTry = getPropertyAccessorsToTry(contextObject.getValue(), eContext.getPropertyAccessors());
 		// Go through the accessors that may be able to resolve it. If they are a cacheable accessor then
 		// get the accessor and use it. If they are not cacheable but report they can read the property
 		// then ask them to read it
@@ -214,7 +209,7 @@ public class PropertyOrFieldReference extends SpelNodeImpl {
 		}
 		else {
 			throw new SpelEvaluationException(getStartPosition(), SpelMessage.PROPERTY_OR_FIELD_NOT_READABLE, name,
-					FormatHelper.formatClassNameForMessage(contextObjectClass));
+					FormatHelper.formatClassNameForMessage(getObjectClass(contextObject.getValue())));
 		}
 	}
 
@@ -236,9 +231,7 @@ public class PropertyOrFieldReference extends SpelNodeImpl {
 			}
 		}
 
-		Class<?> contextObjectClass = getObjectClass(contextObject.getValue());
-
-		List<PropertyAccessor> accessorsToTry = getPropertyAccessorsToTry(contextObjectClass, eContext.getPropertyAccessors());
+		List<PropertyAccessor> accessorsToTry = getPropertyAccessorsToTry(contextObject.getValue(), eContext.getPropertyAccessors());
 		if (accessorsToTry != null) {
 			try {
 				for (PropertyAccessor accessor : accessorsToTry) {
@@ -259,18 +252,16 @@ public class PropertyOrFieldReference extends SpelNodeImpl {
 		}
 		else {
 			throw new SpelEvaluationException(getStartPosition(), SpelMessage.PROPERTY_OR_FIELD_NOT_WRITABLE, name,
-					FormatHelper.formatClassNameForMessage(contextObjectClass));
+					FormatHelper.formatClassNameForMessage(getObjectClass(contextObject.getValue())));
 		}
 	}
 
 	public boolean isWritableProperty(String name, TypedValue contextObject, EvaluationContext eContext) throws SpelEvaluationException {
-		Object contextObjectValue = contextObject.getValue();
-		// TypeDescriptor td = state.getActiveContextObject().getTypeDescriptor();
-		List<PropertyAccessor> resolversToTry = getPropertyAccessorsToTry(getObjectClass(contextObjectValue), eContext.getPropertyAccessors());
-		if (resolversToTry != null) {
-			for (PropertyAccessor pfResolver : resolversToTry) {
+		List<PropertyAccessor> accessorsToTry = getPropertyAccessorsToTry(contextObject.getValue(), eContext.getPropertyAccessors());
+		if (accessorsToTry != null) {
+			for (PropertyAccessor accessor : accessorsToTry) {
 				try {
-					if (pfResolver.canWrite(eContext, contextObjectValue, name)) {
+					if (accessor.canWrite(eContext, contextObject.getValue(), name)) {
 						return true;
 					}
 				}
@@ -290,27 +281,28 @@ public class PropertyOrFieldReference extends SpelNodeImpl {
 	 * the start of the list. In addition, there are specific resolvers that exactly name the class in question and
 	 * resolvers that name a specific class but it is a supertype of the class we have. These are put at the end of the
 	 * specific resolvers set and will be tried after exactly matching accessors but before generic accessors.
-	 * @param targetType the type upon which property access is being attempted
+	 * @param contextObject the object upon which property access is being attempted
 	 * @return a list of resolvers that should be tried in order to access the property
 	 */
-	private List<PropertyAccessor> getPropertyAccessorsToTry(Class<?> targetType, List<PropertyAccessor> propertyAccessors) {
+	private List<PropertyAccessor> getPropertyAccessorsToTry(Object contextObject, List<PropertyAccessor> propertyAccessors) {
+		Class<?> targetType = (contextObject != null ? contextObject.getClass() : null);
+
 		List<PropertyAccessor> specificAccessors = new ArrayList<PropertyAccessor>();
 		List<PropertyAccessor> generalAccessors = new ArrayList<PropertyAccessor>();
 		for (PropertyAccessor resolver : propertyAccessors) {
 			Class<?>[] targets = resolver.getSpecificTargetClasses();
-			if (targets == null) { // generic resolver that says it can be used for any type
+			if (targets == null) {
+				// generic resolver that says it can be used for any type
 				generalAccessors.add(resolver);
 			}
-			else {
-				if (targetType != null) {
-					for (Class<?> clazz : targets) {
-						if (clazz == targetType) {
-							specificAccessors.add( resolver);
-							break;
-						}
-						else if (clazz.isAssignableFrom(targetType)) {
-							generalAccessors.add(resolver);
-						}
+			else if (targetType != null) {
+				for (Class<?> clazz : targets) {
+					if (clazz == targetType) {
+						specificAccessors.add(resolver);
+						break;
+					}
+					else if (clazz.isAssignableFrom(targetType)) {
+						generalAccessors.add(resolver);
 					}
 				}
 			}

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -127,8 +127,7 @@ public abstract class Log4jWebConfigurer {
 
 				// Leave a URL (e.g. "classpath:" or "file:") as-is.
 				if (!ResourceUtils.isUrl(location)) {
-					// Consider a plain file path as relative to the web
-					// application root directory.
+					// Consider a plain file path as relative to the web application root directory.
 					location = WebUtils.getRealPath(servletContext, location);
 				}
 

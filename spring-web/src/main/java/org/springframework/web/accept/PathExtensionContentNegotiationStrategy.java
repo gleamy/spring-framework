@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -63,7 +63,7 @@ public class PathExtensionContentNegotiationStrategy extends AbstractMappingCont
 		urlPathHelper.setUrlDecode(false);
 	}
 
-	private boolean useJaf = JAF_PRESENT;
+	private boolean useJaf = true;
 
 
 	/**
@@ -109,7 +109,7 @@ public class PathExtensionContentNegotiationStrategy extends AbstractMappingCont
 
 	@Override
 	protected MediaType handleNoMatch(NativeWebRequest webRequest, String extension) {
-		if (this.useJaf) {
+		if (this.useJaf && JAF_PRESENT) {
 			MediaType jafMediaType = JafMediaTypeFactory.getMediaType("file." + extension);
 			if (jafMediaType != null && !MediaType.APPLICATION_OCTET_STREAM.equals(jafMediaType)) {
 				return jafMediaType;

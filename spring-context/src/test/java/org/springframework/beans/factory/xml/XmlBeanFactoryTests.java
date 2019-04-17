@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -1379,7 +1379,7 @@ public final class XmlBeanFactoryTests {
 		// This differs from Spring's AOP support, which has a distinct notion
 		// of a "target" object, meaning that the target needs explicit knowledge
 		// of AOP proxying to invoke an advised method on itself.
-		TestBean jenny3 = oom.invokesOverridenMethodOnSelf();
+		TestBean jenny3 = oom.invokesOverriddenMethodOnSelf();
 		assertEquals("Jenny", jenny3.getName());
 		assertNotSame(jenny1, jenny3);
 

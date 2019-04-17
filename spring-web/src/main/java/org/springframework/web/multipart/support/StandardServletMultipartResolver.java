@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2012 the original author or authors.
+ * Copyright 2002-2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -45,6 +45,23 @@ import org.springframework.web.multipart.MultipartResolver;
  */
 public class StandardServletMultipartResolver implements MultipartResolver {
 
+	private boolean resolveLazily = false;
+
+
+	/**
+	 * Set whether to resolve the multipart request lazily at the time of
+	 * file or parameter access.
+	 * <p>Default is "false", resolving the multipart elements immediately, throwing
+	 * corresponding exceptions at the time of the {@link #resolveMultipart} call.
+	 * Switch this to "true" for lazy multipart parsing, throwing parse exceptions
+	 * once the application attempts to obtain multipart files or parameters.
+	 */
+	public void setResolveLazily(boolean resolveLazily) {
+		this.resolveLazily = resolveLazily;
+	}
+
+
+	@Override
 	public boolean isMultipart(HttpServletRequest request) {
 		// Same check as in Commons FileUpload...
 		if (!"post".equals(request.getMethod().toLowerCase())) {
@@ -55,7 +72,7 @@ public class StandardServletMultipartResolver implements MultipartResolver {
 	}
 
 	public MultipartHttpServletRequest resolveMultipart(HttpServletRequest request) throws MultipartException {
-		return new StandardMultipartHttpServletRequest(request);
+		return new StandardMultipartHttpServletRequest(request, this.resolveLazily);
 	}
 
 	public void cleanupMultipart(MultipartHttpServletRequest request) {

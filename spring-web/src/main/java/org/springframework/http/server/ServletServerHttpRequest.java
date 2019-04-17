@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2014 the original author or authors.
+ * Copyright 2002-2015 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,7 +28,6 @@ import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +37,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.util.Assert;
+import org.springframework.util.LinkedCaseInsensitiveMap;
+import org.springframework.util.StringUtils;
 
 /**
  * {@link ServerHttpRequest} implementation that is based on a {@link HttpServletRequest}.
@@ -103,21 +104,30 @@ public class ServletServerHttpRequest implements ServerHttpRequest {
 				}
 			}
 			// HttpServletRequest exposes some headers as properties: we should include those if not already present
-			if (this.headers.getContentType() == null && this.servletRequest.getContentType() != null) {
-				MediaType contentType = MediaType.parseMediaType(this.servletRequest.getContentType());
-				this.headers.setContentType(contentType);
+			MediaType contentType = this.headers.getContentType();
+			if (contentType == null) {
+				String requestContentType = this.servletRequest.getContentType();
+				if (StringUtils.hasLength(requestContentType)) {
+					contentType = MediaType.parseMediaType(requestContentType);
+					this.headers.setContentType(contentType);
+				}
 			}
-			if (this.headers.getContentType() != null && this.headers.getContentType().getCharSet() == null &&
-					this.servletRequest.getCharacterEncoding() != null) {
-				MediaType oldContentType = this.headers.getContentType();
-				Charset charSet = Charset.forName(this.servletRequest.getCharacterEncoding());
-				Map<String, String> params = new HashMap<String, String>(oldContentType.getParameters());
-				params.put("charset", charSet.toString());
-				MediaType newContentType = new MediaType(oldContentType.getType(), oldContentType.getSubtype(), params);
-				this.headers.setContentType(newContentType);
+			if (contentType != null && contentType.getCharSet() == null) {
+				String requestEncoding = this.servletRequest.getCharacterEncoding();
+				if (StringUtils.hasLength(requestEncoding)) {
+					Charset charSet = Charset.forName(requestEncoding);
+					Map<String, String> params = new LinkedCaseInsensitiveMap<String>();
+					params.putAll(contentType.getParameters());
+					params.put("charset", charSet.toString());
+					MediaType newContentType = new MediaType(contentType.getType(), contentType.getSubtype(), params);
+					this.headers.setContentType(newContentType);
+				}
 			}
-			if (this.headers.getContentLength() == -1 && this.servletRequest.getContentLength() != -1) {
-				this.headers.setContentLength(this.servletRequest.getContentLength());
+			if (this.headers.getContentLength() == -1) {
+				int requestContentLength = this.servletRequest.getContentLength();
+				if (requestContentLength != -1) {
+					this.headers.setContentLength(requestContentLength);
+				}
 			}
 		}
 		return this.headers;
@@ -132,18 +142,21 @@ public class ServletServerHttpRequest implements ServerHttpRequest {
 		}
 	}
 
-	private boolean isFormPost(HttpServletRequest request) {
-		return (request.getContentType() != null && request.getContentType().contains(FORM_CONTENT_TYPE) &&
+
+
+	private static boolean isFormPost(HttpServletRequest request) {
+		String contentType = request.getContentType();
+		return (contentType != null && contentType.contains(FORM_CONTENT_TYPE) &&
 				METHOD_POST.equalsIgnoreCase(request.getMethod()));
 	}
 
 	/**
 	 * Use {@link javax.servlet.ServletRequest#getParameterMap()} to reconstruct the
 	 * body of a form 'POST' providing a predictable outcome as opposed to reading
-	 * from the body, which can fail if any other code has used ServletRequest
-	 * to access a parameter thus causing the input stream to be "consumed".
+	 * from the body, which can fail if any other code has used the ServletRequest
+	 * to access a parameter, thus causing the input stream to be "consumed".
 	 */
-	private InputStream getBodyFromServletRequestParameters(HttpServletRequest request) throws IOException {
+	private static InputStream getBodyFromServletRequestParameters(HttpServletRequest request) throws IOException {
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 		Writer writer = new OutputStreamWriter(bos, FORM_CHARSET);
 

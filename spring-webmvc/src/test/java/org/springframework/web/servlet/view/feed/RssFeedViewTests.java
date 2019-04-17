@@ -1,11 +1,11 @@
 /*
- * Copyright ${YEAR} the original author or authors.
+ * Copyright 2002-2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,6 @@
 package org.springframework.web.servlet.view.feed;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +47,6 @@ public class RssFeedViewTests {
 	public void createView() throws Exception {
 		view = new MyRssFeedView();
 		setIgnoreWhitespace(true);
-
 	}
 
 	@Test
@@ -63,11 +61,12 @@ public class RssFeedViewTests {
 		view.render(model, request, response);
 		assertEquals("Invalid content-type", "application/rss+xml", response.getContentType());
 		String expected = "<rss version=\"2.0\">" +
-				"<channel><title>Test Feed</title><link>http://example.com</link><description>Test feed description</description>" +
+				"<channel><title>Test Feed</title><link>https://example.com</link><description>Test feed description</description>" +
 				"<item><title>2</title><description>This is entry 2</description></item>" +
 				"<item><title>1</title><description>This is entry 1</description></item>" + "</channel></rss>";
 		assertXMLEqual(expected, response.getContentAsString());
 	}
+
 
 	private static class MyRssFeedView extends AbstractRssFeedView {
 
@@ -75,15 +74,13 @@ public class RssFeedViewTests {
 		protected void buildFeedMetadata(Map model, Channel channel, HttpServletRequest request) {
 			channel.setTitle("Test Feed");
 			channel.setDescription("Test feed description");
-			channel.setLink("http://example.com");
+			channel.setLink("https://example.com");
 		}
 
 		@Override
-		protected List<Item> buildFeedItems(Map model, HttpServletRequest request, HttpServletResponse response)
-				throws Exception {
+		protected List<Item> buildFeedItems(Map<String, Object> model, HttpServletRequest request, HttpServletResponse response) throws Exception {
 			List<Item> items = new ArrayList<Item>();
-			for (Iterator iterator = model.keySet().iterator(); iterator.hasNext();) {
-				String name = (String) iterator.next();
+			for (String name : model.keySet()) {
 				Item item = new Item();
 				item.setTitle(name);
 				Description description = new Description();
@@ -94,4 +91,5 @@ public class RssFeedViewTests {
 			return items;
 		}
 	}
+
 }

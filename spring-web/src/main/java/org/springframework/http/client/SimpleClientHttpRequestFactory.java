@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2013 the original author or authors.
+ * Copyright 2002-2015 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,13 +27,13 @@ import org.springframework.http.HttpMethod;
 import org.springframework.util.Assert;
 
 /**
- * {@link ClientHttpRequestFactory} implementation that uses standard J2SE facilities.
+ * {@link ClientHttpRequestFactory} implementation that uses standard JDK facilities.
  *
  * @author Arjen Poutsma
  * @author Juergen Hoeller
  * @since 3.0
  * @see java.net.HttpURLConnection
- * @see CommonsClientHttpRequestFactory
+ * @see HttpComponentsClientHttpRequestFactory
  */
 public class SimpleClientHttpRequestFactory implements ClientHttpRequestFactory {
 
@@ -107,14 +107,12 @@ public class SimpleClientHttpRequestFactory implements ClientHttpRequestFactory 
 	}
 
 	/**
-	 * Set if the underlying URLConnection can be set to 'output streaming' mode. When
-	 * output streaming is enabled, authentication and redirection cannot be handled
-	 * automatically. If output streaming is disabled the
-	 * {@link HttpURLConnection#setFixedLengthStreamingMode(int)
-	 * setFixedLengthStreamingMode} and
-	 * {@link HttpURLConnection#setChunkedStreamingMode(int) setChunkedStreamingMode}
-	 * methods of the underlying connection will never be called.
-	 * <p>Default is {@code true}.
+	 * Set if the underlying URLConnection can be set to 'output streaming' mode.
+	 * Default is {@code true}.
+	 * <p>When output streaming is enabled, authentication and redirection cannot be handled automatically.
+	 * If output streaming is disabled, the {@link HttpURLConnection#setFixedLengthStreamingMode} and
+	 * {@link HttpURLConnection#setChunkedStreamingMode} methods of the underlying connection will never
+	 * be called.
 	 * @param outputStreaming if output streaming is enabled
 	 */
 	public void setOutputStreaming(boolean outputStreaming) {
@@ -129,8 +127,7 @@ public class SimpleClientHttpRequestFactory implements ClientHttpRequestFactory 
 			return new SimpleBufferingClientHttpRequest(connection, this.outputStreaming);
 		}
 		else {
-			return new SimpleStreamingClientHttpRequest(connection, this.chunkSize,
-					this.outputStreaming);
+			return new SimpleStreamingClientHttpRequest(connection, this.chunkSize, this.outputStreaming);
 		}
 	}
 
@@ -163,19 +160,23 @@ public class SimpleClientHttpRequestFactory implements ClientHttpRequestFactory 
 		if (this.readTimeout >= 0) {
 			connection.setReadTimeout(this.readTimeout);
 		}
+
 		connection.setDoInput(true);
+
 		if ("GET".equals(httpMethod)) {
 			connection.setInstanceFollowRedirects(true);
 		}
 		else {
 			connection.setInstanceFollowRedirects(false);
 		}
-		if ("PUT".equals(httpMethod) || "POST".equals(httpMethod) || "PATCH".equals(httpMethod)) {
+
+		if ("POST".equals(httpMethod) || "PUT".equals(httpMethod) || "PATCH".equals(httpMethod)) {
 			connection.setDoOutput(true);
 		}
 		else {
 			connection.setDoOutput(false);
 		}
+
 		connection.setRequestMethod(httpMethod);
 	}
 

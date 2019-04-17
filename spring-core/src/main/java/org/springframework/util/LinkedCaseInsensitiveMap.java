@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2012 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -36,7 +36,7 @@ import java.util.Map;
 @SuppressWarnings("serial")
 public class LinkedCaseInsensitiveMap<V> extends LinkedHashMap<String, V> {
 
-	private final Map<String, String> caseInsensitiveKeys;
+	private Map<String, String> caseInsensitiveKeys;
 
 	private final Locale locale;
 
@@ -114,27 +114,37 @@ public class LinkedCaseInsensitiveMap<V> extends LinkedHashMap<String, V> {
 	@Override
 	public V get(Object key) {
 		if (key instanceof String) {
-			return super.get(this.caseInsensitiveKeys.get(convertKey((String) key)));
+			String caseInsensitiveKey = this.caseInsensitiveKeys.get(convertKey((String) key));
+			if (caseInsensitiveKey != null) {
+				return super.get(caseInsensitiveKey);
+			}
 		}
-		else {
-			return null;
-		}
+		return null;
 	}
 
 	@Override
 	public V remove(Object key) {
-		if (key instanceof String ) {
-			return super.remove(this.caseInsensitiveKeys.remove(convertKey((String) key)));
+		if (key instanceof String) {
+			String caseInsensitiveKey = this.caseInsensitiveKeys.remove(convertKey((String) key));
+			if (caseInsensitiveKey != null) {
+				return super.remove(caseInsensitiveKey);
+			}
 		}
-		else {
-			return null;
-		}
+		return null;
 	}
 
 	@Override
 	public void clear() {
 		this.caseInsensitiveKeys.clear();
 		super.clear();
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public Object clone() {
+		LinkedCaseInsensitiveMap<V> copy = (LinkedCaseInsensitiveMap<V>) super.clone();
+		copy.caseInsensitiveKeys = new HashMap<String, String>(this.caseInsensitiveKeys);
+		return copy;
 	}
 
 

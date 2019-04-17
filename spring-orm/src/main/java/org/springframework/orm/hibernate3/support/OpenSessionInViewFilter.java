@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -78,9 +78,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
  *
  * <p>Looks up the SessionFactory in Spring's root web application context.
  * Supports a "sessionFactoryBeanName" filter init-param in {@code web.xml};
- * the default bean name is "sessionFactory". Looks up the SessionFactory on each
- * request, to avoid initialization order issues (when using ContextLoaderServlet,
- * the root application context will get initialized <i>after</i> this filter).
+ * the default bean name is "sessionFactory".
  *
  * @author Juergen Hoeller
  * @since 1.2

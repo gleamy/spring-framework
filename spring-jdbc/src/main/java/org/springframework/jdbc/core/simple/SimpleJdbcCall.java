@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2013 the original author or authors.
+ * Copyright 2002-2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
 package org.springframework.jdbc.core.simple;
 
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import javax.sql.DataSource;
 
@@ -116,7 +116,7 @@ public class SimpleJdbcCall extends AbstractJdbcCall implements SimpleJdbcCallOp
 	}
 
 	public SimpleJdbcCall useInParameterNames(String... inParameterNames) {
-		setInParameterNames(new HashSet<String>(Arrays.asList(inParameterNames)));
+		setInParameterNames(new LinkedHashSet<String>(Arrays.asList(inParameterNames)));
 		return this;
 	}
 

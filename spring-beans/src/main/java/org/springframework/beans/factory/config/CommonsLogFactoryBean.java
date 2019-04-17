@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,7 +24,7 @@ import org.springframework.beans.factory.InitializingBean;
 
 /**
  * Factory bean for
- * <a href="http://jakarta.apache.org/commons/logging.html">commons-logging</a>
+ * <a href="https://jakarta.apache.org/commons/logging.html">commons-logging</a>
  * {@link org.apache.commons.logging.Log} instances.
  *
  * <p>Useful for sharing Log instances among multiple beans instead of using

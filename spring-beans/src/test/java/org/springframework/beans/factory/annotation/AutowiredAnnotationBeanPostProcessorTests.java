@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2013 the original author or authors.
+ * Copyright 2002-2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,14 +16,6 @@
 
 package org.springframework.beans.factory.annotation;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import java.io.Serializable;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -33,10 +25,12 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.Test;
+
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.ObjectFactory;
+import org.springframework.beans.factory.UnsatisfiedDependencyException;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.AutowireCandidateQualifier;
@@ -49,16 +43,15 @@ import org.springframework.tests.sample.beans.NestedTestBean;
 import org.springframework.tests.sample.beans.TestBean;
 import org.springframework.util.SerializationTestUtils;
 
+import static org.junit.Assert.*;
 
 /**
- * Unit tests for {@link AutowiredAnnotationBeanPostProcessor}.
- *
  * @author Juergen Hoeller
  * @author Mark Fisher
  * @author Sam Brannen
  * @author Chris Beams
  */
-public final class AutowiredAnnotationBeanPostProcessorTests {
+public class AutowiredAnnotationBeanPostProcessorTests {
 
 	@Test
 	public void testIncompleteBeanDefinition() {
@@ -401,6 +394,23 @@ public final class AutowiredAnnotationBeanPostProcessorTests {
 		assertSame(ntb1, bean.getNestedTestBeans()[0]);
 		assertSame(ntb2, bean.getNestedTestBeans()[1]);
 		bf.destroySingletons();
+	}
+
+	@Test
+	public void testConstructorResourceInjectionWithNoCandidatesAndNoFallback() {
+		DefaultListableBeanFactory bf = new DefaultListableBeanFactory();
+		AutowiredAnnotationBeanPostProcessor bpp = new AutowiredAnnotationBeanPostProcessor();
+		bpp.setBeanFactory(bf);
+		bf.addBeanPostProcessor(bpp);
+		bf.registerBeanDefinition("annotatedBean", new RootBeanDefinition(ConstructorWithoutFallbackBean.class));
+
+		try {
+			bf.getBean("annotatedBean");
+			fail("Should have thrown UnsatisfiedDependencyException");
+		}
+		catch (UnsatisfiedDependencyException ex) {
+			// expected
+		}
 	}
 
 	@Test
@@ -932,7 +942,7 @@ public final class AutowiredAnnotationBeanPostProcessorTests {
 	 * Verifies that a dependency on a {@link FactoryBean} can be autowired via
 	 * {@link Autowired @Autowired}, specifically addressing the JIRA issue
 	 * raised in <a
-	 * href="http://opensource.atlassian.com/projects/spring/browse/SPR-4040"
+	 * href="https://opensource.atlassian.com/projects/spring/browse/SPR-4040"
 	 * target="_blank">SPR-4040</a>.
 	 */
 	@Test
@@ -962,7 +972,6 @@ public final class AutowiredAnnotationBeanPostProcessorTests {
 		private TestBean testBean;
 
 		private TestBean testBean2;
-
 
 		@Autowired
 		public void setTestBean2(TestBean testBean2) {
@@ -1265,6 +1274,21 @@ public final class AutowiredAnnotationBeanPostProcessorTests {
 	}
 
 
+	public static class ConstructorWithoutFallbackBean {
+
+		protected ITestBean testBean3;
+
+		@Autowired(required = false)
+		public ConstructorWithoutFallbackBean(ITestBean testBean3) {
+			this.testBean3 = testBean3;
+		}
+
+		public ITestBean getTestBean3() {
+			return this.testBean3;
+		}
+	}
+
+
 	public static class ConstructorsCollectionResourceInjectionBean {
 
 		protected ITestBean testBean3;
@@ -1329,7 +1353,6 @@ public final class AutowiredAnnotationBeanPostProcessorTests {
 
 		@Autowired
 		private Map<String, TestBean> testBeanMap;
-
 
 		public Map<String, TestBean> getTestBeanMap() {
 			return this.testBeanMap;

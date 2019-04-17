@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2012 the original author or authors.
+ * Copyright 2002-2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -47,7 +47,7 @@ public class NameMatchMethodPointcut extends StaticMethodMatcherPointcut impleme
 	 * @see #setMappedNames
 	 */
 	public void setMappedName(String mappedName) {
-		setMappedNames(new String[] {mappedName});
+		setMappedNames(mappedName);
 	}
 
 	/**
@@ -55,7 +55,7 @@ public class NameMatchMethodPointcut extends StaticMethodMatcherPointcut impleme
 	 * Matching will be the union of all these; if any match,
 	 * the pointcut matches.
 	 */
-	public void setMappedNames(String[] mappedNames) {
+	public void setMappedNames(String... mappedNames) {
 		this.mappedNames = new LinkedList<String>();
 		if (mappedNames != null) {
 			this.mappedNames.addAll(Arrays.asList(mappedNames));
@@ -77,7 +77,8 @@ public class NameMatchMethodPointcut extends StaticMethodMatcherPointcut impleme
 	}
 
 
-	public boolean matches(Method method, Class targetClass) {
+	@Override
+	public boolean matches(Method method, Class<?> targetClass) {
 		for (String mappedName : this.mappedNames) {
 			if (mappedName.equals(method.getName()) || isMatch(method.getName(), mappedName)) {
 				return true;

@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2013 the original author or authors.
+ * Copyright 2002-2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -39,7 +39,7 @@ import org.springframework.util.ReflectionUtils;
  * When attempting to locate annotations on {@link Method Methods}, it is wise to check
  * for bridge {@link Method Methods} as appropriate and find the bridged {@link Method}.
  *
- * <p>See <a href="http://java.sun.com/docs/books/jls/third_edition/html/expressions.html#15.12.4.5">
+ * <p>See <a href="https://java.sun.com/docs/books/jls/third_edition/html/expressions.html#15.12.4.5">
  * The Java Language Specification</a> for more details on the use of bridge methods.
  *
  * @author Rob Harrop
@@ -143,7 +143,7 @@ public abstract class BridgeMethodResolver {
 	 */
 	private static Method findGenericDeclaration(Method bridgeMethod) {
 		// Search parent types for method that has same signature as bridge.
-		Class superclass = bridgeMethod.getDeclaringClass().getSuperclass();
+		Class<?> superclass = bridgeMethod.getDeclaringClass().getSuperclass();
 		while (superclass != null && !Object.class.equals(superclass)) {
 			Method method = searchForMatch(superclass, bridgeMethod);
 			if (method != null && !method.isBridge()) {
@@ -153,8 +153,8 @@ public abstract class BridgeMethodResolver {
 		}
 
 		// Search interfaces.
-		Class[] interfaces = ClassUtils.getAllInterfacesForClass(bridgeMethod.getDeclaringClass());
-		for (Class ifc : interfaces) {
+		Class<?>[] interfaces = ClassUtils.getAllInterfacesForClass(bridgeMethod.getDeclaringClass());
+		for (Class<?> ifc : interfaces) {
 			Method method = searchForMatch(ifc, bridgeMethod);
 			if (method != null && !method.isBridge()) {
 				return method;
@@ -174,13 +174,13 @@ public abstract class BridgeMethodResolver {
 			Method genericMethod, Method candidateMethod, Map<TypeVariable, Type> typeVariableMap) {
 
 		Type[] genericParameters = genericMethod.getGenericParameterTypes();
-		Class[] candidateParameters = candidateMethod.getParameterTypes();
+		Class<?>[] candidateParameters = candidateMethod.getParameterTypes();
 		if (genericParameters.length != candidateParameters.length) {
 			return false;
 		}
 		for (int i = 0; i < genericParameters.length; i++) {
 			Type genericParameter = genericParameters[i];
-			Class candidateParameter = candidateParameters[i];
+			Class<?> candidateParameter = candidateParameters[i];
 			if (candidateParameter.isArray()) {
 				// An array type: compare the component type.
 				Type rawType = GenericTypeResolver.getRawType(genericParameter, typeVariableMap);
@@ -193,7 +193,7 @@ public abstract class BridgeMethodResolver {
 				}
 			}
 			// A non-array type: compare the type itself.
-			Class resolvedParameter = GenericTypeResolver.resolveType(genericParameter, typeVariableMap);
+			Class<?> resolvedParameter = GenericTypeResolver.resolveType(genericParameter, typeVariableMap);
 			if (!candidateParameter.equals(resolvedParameter)) {
 				return false;
 			}
@@ -206,24 +206,23 @@ public abstract class BridgeMethodResolver {
 	 * that of the supplied {@link Method}, then this matching {@link Method} is returned,
 	 * otherwise {@code null} is returned.
 	 */
-	private static Method searchForMatch(Class type, Method bridgeMethod) {
+	private static Method searchForMatch(Class<?> type, Method bridgeMethod) {
 		return ReflectionUtils.findMethod(type, bridgeMethod.getName(), bridgeMethod.getParameterTypes());
 	}
 
 	/**
 	 * Compare the signatures of the bridge method and the method which it bridges. If
 	 * the parameter and return types are the same, it is a 'visibility' bridge method
-	 * introduced in Java 6 to fix http://bugs.sun.com/view_bug.do?bug_id=6342411.
-	 * See also http://stas-blogspot.blogspot.com/2010/03/java-bridge-methods-explained.html
+	 * introduced in Java 6 to fix https://bugs.java.com/view_bug.do?bug_id=6342411.
+	 * See also https://stas-blogspot.blogspot.com/2010/03/java-bridge-methods-explained.html
 	 * @return whether signatures match as described
 	 */
 	public static boolean isVisibilityBridgeMethodPair(Method bridgeMethod, Method bridgedMethod) {
 		if (bridgeMethod == bridgedMethod) {
 			return true;
 		}
-		return Arrays.equals(bridgeMethod.getParameterTypes(), bridgedMethod.getParameterTypes()) &&
-				bridgeMethod.getReturnType().equals(bridgedMethod.getReturnType());
+		return (Arrays.equals(bridgeMethod.getParameterTypes(), bridgedMethod.getParameterTypes()) &&
+				bridgeMethod.getReturnType().equals(bridgedMethod.getReturnType()));
 	}
-
 
 }

@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2009 the original author or authors.
+ * Copyright 2002-2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,6 +32,11 @@ import org.springframework.expression.TypedValue;
  */
 public class BeanFactoryAccessor implements PropertyAccessor {
 
+	public Class<?>[] getSpecificTargetClasses() {
+		return new Class<?>[] {BeanFactory.class};
+	}
+
+	@Override
 	public boolean canRead(EvaluationContext context, Object target, String name) throws AccessException {
 		return (((BeanFactory) target).containsBean(name));
 	}
@@ -46,10 +51,6 @@ public class BeanFactoryAccessor implements PropertyAccessor {
 
 	public void write(EvaluationContext context, Object target, String name, Object newValue) throws AccessException {
 		throw new AccessException("Beans in a BeanFactory are read-only");
-	}
-
-	public Class[] getSpecificTargetClasses() {
-		return new Class[] {BeanFactory.class};
 	}
 
 }

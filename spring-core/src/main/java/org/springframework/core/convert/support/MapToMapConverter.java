@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2012 the original author or authors.
+ * Copyright 2002-2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -36,15 +36,18 @@ import org.springframework.core.convert.converter.ConditionalGenericConverter;
  * map's parameterized types K,V if necessary.
  *
  * @author Keith Donald
+ * @author Juergen Hoeller
  * @since 3.0
  */
 final class MapToMapConverter implements ConditionalGenericConverter {
 
 	private final ConversionService conversionService;
 
+
 	public MapToMapConverter(ConversionService conversionService) {
 		this.conversionService = conversionService;
 	}
+
 
 	public Set<ConvertiblePair> getConvertibleTypes() {
 		return Collections.singleton(new ConvertiblePair(Map.class, Map.class));
@@ -59,31 +62,38 @@ final class MapToMapConverter implements ConditionalGenericConverter {
 		if (source == null) {
 			return null;
 		}
-		boolean copyRequired = !targetType.getType().isInstance(source);
 		Map<Object, Object> sourceMap = (Map<Object, Object>) source;
+
+		// Shortcut if possible...
+		boolean copyRequired = !targetType.getType().isInstance(source);
 		if (!copyRequired && sourceMap.isEmpty()) {
 			return sourceMap;
 		}
+		TypeDescriptor keyDesc = targetType.getMapKeyTypeDescriptor();
+		TypeDescriptor valueDesc = targetType.getMapValueTypeDescriptor();
+
 		List<MapEntry> targetEntries = new ArrayList<MapEntry>(sourceMap.size());
 		for (Map.Entry<Object, Object> entry : sourceMap.entrySet()) {
 			Object sourceKey = entry.getKey();
 			Object sourceValue = entry.getValue();
-			Object targetKey = convertKey(sourceKey, sourceType, targetType.getMapKeyTypeDescriptor());
-			Object targetValue = convertValue(sourceValue, sourceType, targetType.getMapValueTypeDescriptor());
+			Object targetKey = convertKey(sourceKey, sourceType, keyDesc);
+			Object targetValue = convertValue(sourceValue, sourceType, valueDesc);
 			targetEntries.add(new MapEntry(targetKey, targetValue));
 			if (sourceKey != targetKey || sourceValue != targetValue) {
 				copyRequired = true;
 			}
 		}
-		if(!copyRequired) {
+		if (!copyRequired) {
 			return sourceMap;
 		}
+
 		Map<Object, Object> targetMap = CollectionFactory.createMap(targetType.getType(), sourceMap.size());
 		for (MapEntry entry : targetEntries) {
 			entry.addToMap(targetMap);
 		}
 		return targetMap;
 	}
+
 
 	// internal helpers
 
@@ -111,10 +121,12 @@ final class MapToMapConverter implements ConditionalGenericConverter {
 		return this.conversionService.convert(sourceValue, sourceType.getMapValueTypeDescriptor(sourceValue), targetType);
 	}
 
+
 	private static class MapEntry {
 
-		private Object key;
-		private Object value;
+		private final Object key;
+
+		private final Object value;
 
 		public MapEntry(Object key, Object value) {
 			this.key = key;
@@ -122,7 +134,7 @@ final class MapToMapConverter implements ConditionalGenericConverter {
 		}
 
 		public void addToMap(Map<Object, Object> map) {
-			map.put(key, value);
+			map.put(this.key, this.value);
 		}
 	}
 

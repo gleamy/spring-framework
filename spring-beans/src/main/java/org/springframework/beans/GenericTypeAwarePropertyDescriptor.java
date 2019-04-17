@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2013 the original author or authors.
+ * Copyright 2002-2015 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -46,13 +46,13 @@ class GenericTypeAwarePropertyDescriptor extends PropertyDescriptor {
 
 	private final Method writeMethod;
 
-	private final Class<?> propertyEditorClass;
-
 	private volatile Set<Method> ambiguousWriteMethods;
+
+	private MethodParameter writeMethodParameter;
 
 	private Class<?> propertyType;
 
-	private MethodParameter writeMethodParameter;
+	private final Class<?> propertyEditorClass;
 
 
 	public GenericTypeAwarePropertyDescriptor(Class<?> beanClass, String propertyName,
@@ -60,8 +60,11 @@ class GenericTypeAwarePropertyDescriptor extends PropertyDescriptor {
 			throws IntrospectionException {
 
 		super(propertyName, null, null);
+
+		if (beanClass == null)  {
+			throw new IntrospectionException("Bean class must not be null");
+		}
 		this.beanClass = beanClass;
-		this.propertyEditorClass = propertyEditorClass;
 
 		Method readMethodToUse = BridgeMethodResolver.findBridgedMethod(readMethod);
 		Method writeMethodToUse = BridgeMethodResolver.findBridgedMethod(writeMethod);
@@ -85,7 +88,8 @@ class GenericTypeAwarePropertyDescriptor extends PropertyDescriptor {
 			Set<Method> ambiguousCandidates = new HashSet<Method>();
 			for (Method method : beanClass.getMethods()) {
 				if (method.getName().equals(writeMethodToUse.getName()) &&
-						!method.equals(writeMethodToUse) && !method.isBridge()) {
+						!method.equals(writeMethodToUse) && !method.isBridge() &&
+						method.getParameterTypes().length == writeMethodToUse.getParameterTypes().length) {
 					ambiguousCandidates.add(method);
 				}
 			}
@@ -93,7 +97,10 @@ class GenericTypeAwarePropertyDescriptor extends PropertyDescriptor {
 				this.ambiguousWriteMethods = ambiguousCandidates;
 			}
 		}
+
+		this.propertyEditorClass = propertyEditorClass;
 	}
+
 
 	public Class<?> getBeanClass() {
 		return this.beanClass;
@@ -120,9 +127,15 @@ class GenericTypeAwarePropertyDescriptor extends PropertyDescriptor {
 		return this.writeMethod;
 	}
 
-	@Override
-	public Class<?> getPropertyEditorClass() {
-		return this.propertyEditorClass;
+	public synchronized MethodParameter getWriteMethodParameter() {
+		if (this.writeMethod == null) {
+			return null;
+		}
+		if (this.writeMethodParameter == null) {
+			this.writeMethodParameter = new MethodParameter(this.writeMethod, 0);
+			GenericTypeResolver.resolveParameterType(this.writeMethodParameter, this.beanClass);
+		}
+		return this.writeMethodParameter;
 	}
 
 	@Override
@@ -144,15 +157,9 @@ class GenericTypeAwarePropertyDescriptor extends PropertyDescriptor {
 		return this.propertyType;
 	}
 
-	public synchronized MethodParameter getWriteMethodParameter() {
-		if (this.writeMethod == null) {
-			return null;
-		}
-		if (this.writeMethodParameter == null) {
-			this.writeMethodParameter = new MethodParameter(this.writeMethod, 0);
-			GenericTypeResolver.resolveParameterType(this.writeMethodParameter, this.beanClass);
-		}
-		return this.writeMethodParameter;
+	@Override
+	public Class<?> getPropertyEditorClass() {
+		return this.propertyEditorClass;
 	}
 
 }

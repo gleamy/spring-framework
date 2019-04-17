@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2013 the original author or authors.
+ * Copyright 2002-2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -86,14 +86,15 @@ public class MethodInvokingJobDetailFactoryBean extends ArgumentConvertingMethod
 
 	static {
 		try {
-			jobDetailImplClass = Class.forName("org.quartz.impl.JobDetailImpl");
+			jobDetailImplClass = ClassUtils.forName("org.quartz.impl.JobDetailImpl",
+					MethodInvokingJobDetailFactoryBean.class.getClassLoader());
 		}
 		catch (ClassNotFoundException ex) {
 			jobDetailImplClass = null;
 		}
 		try {
-			Class<?> jobExecutionContextClass =
-					QuartzJobBean.class.getClassLoader().loadClass("org.quartz.JobExecutionContext");
+			Class<?> jobExecutionContextClass = ClassUtils.forName("org.quartz.JobExecutionContext",
+					MethodInvokingJobDetailFactoryBean.class.getClassLoader());
 			setResultMethod = jobExecutionContextClass.getMethod("setResult", Object.class);
 		}
 		catch (Exception ex) {
@@ -145,7 +146,7 @@ public class MethodInvokingJobDetailFactoryBean extends ArgumentConvertingMethod
 	 * fashion. The behavior when one does not want concurrent jobs to be
 	 * executed is realized through adding the {@link StatefulJob} interface.
 	 * More information on stateful versus stateless jobs can be found
-	 * <a href="http://www.quartz-scheduler.org/documentation/quartz-2.1.x/tutorials/tutorial-lesson-03">here</a>.
+	 * <a href="https://www.quartz-scheduler.org/documentation/quartz-2.1.x/tutorials/tutorial-lesson-03">here</a>.
 	 * <p>The default setting is to run jobs concurrently.
 	 */
 	public void setConcurrent(boolean concurrent) {

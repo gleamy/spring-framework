@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -150,7 +150,7 @@ public class UrlFilenameViewControllerTests extends TestCase {
 
 	/**
 	 * This is the expected behavior, and it now has a test to prove it.
-	 * http://opensource.atlassian.com/projects/spring/browse/SPR-2789
+	 * https://opensource.atlassian.com/projects/spring/browse/SPR-2789
 	 */
 	public void testNestedPathisUsedAsViewName_InBreakingChangeFromSpring12Line() throws Exception {
 		UrlFilenameViewController ctrl = new UrlFilenameViewController();

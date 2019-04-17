@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2013 the original author or authors.
+ * Copyright 2002-2015 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,6 +19,7 @@ package org.springframework.aop.aspectj;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -29,7 +30,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.aspectj.weaver.BCException;
 import org.aspectj.weaver.patterns.NamePattern;
-import org.aspectj.weaver.reflect.ReflectionWorld;
 import org.aspectj.weaver.reflect.ReflectionWorld.ReflectionWorldException;
 import org.aspectj.weaver.reflect.ShadowMatchImpl;
 import org.aspectj.weaver.tools.ContextBasedMatcher;
@@ -108,6 +108,8 @@ public class AspectJExpressionPointcut extends AbstractExpressionPointcut
 
 	private BeanFactory beanFactory;
 
+	private transient ClassLoader pointcutClassLoader;
+
 	private transient PointcutExpression pointcutExpression;
 
 	private transient Map<Method, ShadowMatch> shadowMatchCache = new ConcurrentHashMap<Method, ShadowMatch>(32);
@@ -182,18 +184,11 @@ public class AspectJExpressionPointcut extends AbstractExpressionPointcut
 			throw new IllegalStateException("Must set property 'expression' before attempting to match");
 		}
 		if (this.pointcutExpression == null) {
-			this.pointcutExpression = buildPointcutExpression();
+			this.pointcutClassLoader = (this.beanFactory instanceof ConfigurableBeanFactory ?
+					((ConfigurableBeanFactory) this.beanFactory).getBeanClassLoader() :
+					ClassUtils.getDefaultClassLoader());
+			this.pointcutExpression = buildPointcutExpression(this.pointcutClassLoader);
 		}
-	}
-
-	/**
-	 * Build the underlying AspectJ pointcut expression.
-	 */
-	private PointcutExpression buildPointcutExpression() {
-		ClassLoader cl = (this.beanFactory instanceof ConfigurableBeanFactory ?
-				((ConfigurableBeanFactory) this.beanFactory).getBeanClassLoader() :
-				ClassUtils.getDefaultClassLoader());
-		return buildPointcutExpression(cl);
 	}
 
 	/**
@@ -206,8 +201,7 @@ public class AspectJExpressionPointcut extends AbstractExpressionPointcut
 			pointcutParameters[i] = parser.createPointcutParameter(
 					this.pointcutParameterNames[i], this.pointcutParameterTypes[i]);
 		}
-		return parser.parsePointcutExpression(
-				replaceBooleanOperators(getExpression()),
+		return parser.parsePointcutExpression(replaceBooleanOperators(getExpression()),
 				this.pointcutDeclarationScope, pointcutParameters);
 	}
 
@@ -248,23 +242,22 @@ public class AspectJExpressionPointcut extends AbstractExpressionPointcut
 	public boolean matches(Class<?> targetClass) {
 		checkReadyToMatch();
 		try {
-			return this.pointcutExpression.couldMatchJoinPointsInType(targetClass);
-		}
-		catch (ReflectionWorldException rwe) {
-			logger.debug("PointcutExpression matching rejected target class", rwe);
 			try {
-				// Actually this is still a "maybe" - treat the pointcut as dynamic if we don't know enough yet
-				return getFallbackPointcutExpression(targetClass).couldMatchJoinPointsInType(targetClass);
+				return this.pointcutExpression.couldMatchJoinPointsInType(targetClass);
 			}
-			catch (BCException bce) {
-				logger.debug("Fallback PointcutExpression matching rejected target class", bce);
-				return false;
+			catch (ReflectionWorldException ex) {
+				logger.debug("PointcutExpression matching rejected target class - trying fallback expression", ex);
+				// Actually this is still a "maybe" - treat the pointcut as dynamic if we don't know enough yet
+				PointcutExpression fallbackExpression = getFallbackPointcutExpression(targetClass);
+				if (fallbackExpression != null) {
+					return fallbackExpression.couldMatchJoinPointsInType(targetClass);
+				}
 			}
 		}
 		catch (BCException ex) {
 			logger.debug("PointcutExpression matching rejected target class", ex);
-			return false;
 		}
+		return false;
 	}
 
 	public boolean matches(Method method, Class<?> targetClass, boolean beanHasIntroductions) {
@@ -326,29 +319,41 @@ public class AspectJExpressionPointcut extends AbstractExpressionPointcut
 		catch (IllegalStateException ex) {
 			// No current invocation...
 			// TODO: Should we really proceed here?
-			logger.debug("Couldn't access current invocation - matching with limited context: " + ex);
-		}
-
-		JoinPointMatch joinPointMatch = shadowMatch.matchesJoinPoint(thisObject, targetObject, args);
-
-		/*
-		 * Do a final check to see if any this(TYPE) kind of residue match. For
-		 * this purpose, we use the original method's (proxy method's) shadow to
-		 * ensure that 'this' is correctly checked against. Without this check,
-		 * we get incorrect match on this(TYPE) where TYPE matches the target
-		 * type but not 'this' (as would be the case of JDK dynamic proxies).
-		 * <p>See SPR-2979 for the original bug.
-		 */
-		if (pmi != null) {  // there is a current invocation
-			RuntimeTestWalker originalMethodResidueTest = getRuntimeTestWalker(originalShadowMatch);
-			if (!originalMethodResidueTest.testThisInstanceOfResidue(thisObject.getClass())) {
-				return false;
-			}
-			if (joinPointMatch.matches()) {
-				bindParameters(pmi, joinPointMatch);
+			if (logger.isDebugEnabled()) {
+				logger.debug("Could not access current invocation - matching with limited context: " + ex);
 			}
 		}
-		return joinPointMatch.matches();
+
+		try {
+			JoinPointMatch joinPointMatch = shadowMatch.matchesJoinPoint(thisObject, targetObject, args);
+
+			/*
+			 * Do a final check to see if any this(TYPE) kind of residue match. For
+			 * this purpose, we use the original method's (proxy method's) shadow to
+			 * ensure that 'this' is correctly checked against. Without this check,
+			 * we get incorrect match on this(TYPE) where TYPE matches the target
+			 * type but not 'this' (as would be the case of JDK dynamic proxies).
+			 * <p>See SPR-2979 for the original bug.
+			 */
+			if (pmi != null) {  // there is a current invocation
+				RuntimeTestWalker originalMethodResidueTest = getRuntimeTestWalker(originalShadowMatch);
+				if (!originalMethodResidueTest.testThisInstanceOfResidue(thisObject.getClass())) {
+					return false;
+				}
+				if (joinPointMatch.matches()) {
+					bindParameters(pmi, joinPointMatch);
+				}
+			}
+
+			return joinPointMatch.matches();
+		}
+		catch (Throwable ex) {
+			if (logger.isDebugEnabled()) {
+				logger.debug("Failed to evaluate join point for arguments " + Arrays.asList(args) +
+						" - falling back to non-match", ex);
+			}
+			return false;
+		}
 	}
 
 	protected String getCurrentProxiedBeanName() {
@@ -357,12 +362,19 @@ public class AspectJExpressionPointcut extends AbstractExpressionPointcut
 
 
 	/**
-	 * Get a new pointcut expression based on a target class's loader, rather
-	 * than the default.
+	 * Get a new pointcut expression based on a target class's loader rather than the default.
 	 */
 	private PointcutExpression getFallbackPointcutExpression(Class<?> targetClass) {
-		ClassLoader classLoader = targetClass.getClassLoader();
-		return (classLoader != null ? buildPointcutExpression(classLoader) : this.pointcutExpression);
+		try {
+			ClassLoader classLoader = targetClass.getClassLoader();
+			if (classLoader != null && classLoader != this.pointcutClassLoader) {
+				return buildPointcutExpression(classLoader);
+			}
+		}
+		catch (Throwable ex) {
+			logger.debug("Failed to create fallback PointcutExpression", ex);
+		}
+		return null;
 	}
 
 	private RuntimeTestWalker getRuntimeTestWalker(ShadowMatch shadowMatch) {
@@ -388,46 +400,51 @@ public class AspectJExpressionPointcut extends AbstractExpressionPointcut
 		if (shadowMatch == null) {
 			synchronized (this.shadowMatchCache) {
 				// Not found - now check again with full lock...
+				PointcutExpression fallbackExpression = null;
 				Method methodToMatch = targetMethod;
-				PointcutExpression fallbackPointcutExpression = null;
-				shadowMatch = this.shadowMatchCache.get(methodToMatch);
+				shadowMatch = this.shadowMatchCache.get(targetMethod);
 				if (shadowMatch == null) {
 					try {
-						shadowMatch = this.pointcutExpression.matchesMethodExecution(targetMethod);
+						shadowMatch = this.pointcutExpression.matchesMethodExecution(methodToMatch);
 					}
-					catch (ReflectionWorld.ReflectionWorldException ex) {
+					catch (ReflectionWorldException ex) {
 						// Failed to introspect target method, probably because it has been loaded
-						// in a special ClassLoader. Let's try the original method instead...
+						// in a special ClassLoader. Let's try the declaring ClassLoader instead...
 						try {
-							fallbackPointcutExpression = getFallbackPointcutExpression(methodToMatch.getDeclaringClass());
-							shadowMatch = fallbackPointcutExpression.matchesMethodExecution(methodToMatch);
-						}
-						catch (ReflectionWorld.ReflectionWorldException ex2) {
-							if (targetMethod == originalMethod) {
-								shadowMatch = new ShadowMatchImpl(org.aspectj.util.FuzzyBoolean.NO, null, null, null);
+							fallbackExpression = getFallbackPointcutExpression(methodToMatch.getDeclaringClass());
+							if (fallbackExpression != null) {
+								shadowMatch = fallbackExpression.matchesMethodExecution(methodToMatch);
 							}
-							else {
-								try {
-									shadowMatch = this.pointcutExpression.matchesMethodExecution(originalMethod);
+						}
+						catch (ReflectionWorldException ex2) {
+							fallbackExpression = null;
+						}
+					}
+					if (shadowMatch == null && targetMethod != originalMethod) {
+						methodToMatch = originalMethod;
+						try {
+							shadowMatch = this.pointcutExpression.matchesMethodExecution(methodToMatch);
+						}
+						catch (ReflectionWorldException ex3) {
+							// Could neither introspect the target class nor the proxy class ->
+							// let's try the original method's declaring class before we give up...
+							try {
+								fallbackExpression = getFallbackPointcutExpression(methodToMatch.getDeclaringClass());
+								if (fallbackExpression != null) {
+									shadowMatch = fallbackExpression.matchesMethodExecution(methodToMatch);
 								}
-								catch (ReflectionWorld.ReflectionWorldException ex3) {
-									// Could neither introspect the target class nor the proxy class ->
-									// let's simply consider this method as non-matching.
-									methodToMatch = originalMethod;
-									fallbackPointcutExpression = getFallbackPointcutExpression(methodToMatch.getDeclaringClass());
-									try {
-										shadowMatch = fallbackPointcutExpression.matchesMethodExecution(methodToMatch);
-									}
-									catch (ReflectionWorld.ReflectionWorldException ex4) {
-										shadowMatch = new ShadowMatchImpl(org.aspectj.util.FuzzyBoolean.NO, null, null, null);
-									}
-								}
+							}
+							catch (ReflectionWorldException ex4) {
+								fallbackExpression = null;
 							}
 						}
 					}
-					if (shadowMatch.maybeMatches() && fallbackPointcutExpression != null) {
+					if (shadowMatch == null) {
+						shadowMatch = new ShadowMatchImpl(org.aspectj.util.FuzzyBoolean.NO, null, null, null);
+					}
+					else if (shadowMatch.maybeMatches() && fallbackExpression != null) {
 						shadowMatch = new DefensiveShadowMatch(shadowMatch,
-								fallbackPointcutExpression.matchesMethodExecution(methodToMatch));
+								fallbackExpression.matchesMethodExecution(methodToMatch));
 					}
 					this.shadowMatchCache.put(targetMethod, shadowMatch);
 				}
@@ -545,7 +562,7 @@ public class AspectJExpressionPointcut extends AbstractExpressionPointcut
 			return false;
 		}
 
-		private FuzzyBoolean contextMatch(Class targetType) {
+		private FuzzyBoolean contextMatch(Class<?> targetType) {
 			String advisedBeanName = getCurrentProxiedBeanName();
 			if (advisedBeanName == null) {  // no proxy creation in progress
 				// abstain; can't return YES, since that will make pointcut with negation fail

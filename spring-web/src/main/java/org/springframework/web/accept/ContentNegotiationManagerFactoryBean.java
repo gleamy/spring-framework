@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -128,6 +128,10 @@ public class ContentNegotiationManagerFactoryBean
 		this.useJaf = useJaf;
 	}
 
+	private boolean isUseJafTurnedOff() {
+		return (this.useJaf != null && !this.useJaf);
+	}
+
 	/**
 	 * Indicate whether a request parameter should be used to determine the
 	 * requested media type with the <em>2nd highest priority</em>, i.e.
@@ -184,9 +188,10 @@ public class ContentNegotiationManagerFactoryBean
 
 		if (this.favorPathExtension) {
 			PathExtensionContentNegotiationStrategy strategy;
-			if (this.servletContext != null) {
+			if (this.servletContext != null && !isUseJafTurnedOff()) {
 				strategy = new ServletPathExtensionContentNegotiationStrategy(this.servletContext, this.mediaTypes);
-			} else {
+			}
+			else {
 				strategy = new PathExtensionContentNegotiationStrategy(this.mediaTypes);
 			}
 			if (this.useJaf != null) {

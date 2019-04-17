@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -58,7 +58,7 @@ public class VelocityViewResolver extends AbstractTemplateViewResolver {
 	 * Requires {@link VelocityView}.
 	 */
 	@Override
-	protected Class requiredViewClass() {
+	protected Class<?> requiredViewClass() {
 		return VelocityView.class;
 	}
 
@@ -88,7 +88,7 @@ public class VelocityViewResolver extends AbstractTemplateViewResolver {
 	 * to automatically load a Velocity Tools toolbox definition file and expose
 	 * all defined tools in the specified scopes. If no config location is
 	 * specified, no toolbox will be loaded and exposed.
-	 * <p>The specfied location string needs to refer to a ServletContext
+	 * <p>The specified location string needs to refer to a ServletContext
 	 * resource, as expected by ServletToolboxManager which is part of
 	 * the view package of Velocity Tools.
 	 * <p><b>Note:</b> Specifying a toolbox config location will lead to

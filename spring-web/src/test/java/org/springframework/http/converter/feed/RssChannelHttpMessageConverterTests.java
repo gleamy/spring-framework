@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2010 the original author or authors.
+ * Copyright 2002-2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,10 +24,7 @@ import java.util.List;
 
 import com.sun.syndication.feed.rss.Channel;
 import com.sun.syndication.feed.rss.Item;
-import static org.custommonkey.xmlunit.XMLAssert.*;
 import org.custommonkey.xmlunit.XMLUnit;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import org.junit.Before;
 import org.junit.Test;
 import org.xml.sax.SAXException;
@@ -36,7 +33,13 @@ import org.springframework.http.MediaType;
 import org.springframework.http.MockHttpInputMessage;
 import org.springframework.http.MockHttpOutputMessage;
 
-/** @author Arjen Poutsma */
+import static org.custommonkey.xmlunit.XMLAssert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+/**
+ * @author Arjen Poutsma
+ */
 public class RssChannelHttpMessageConverterTests {
 
 	private RssChannelHttpMessageConverter converter;
@@ -69,10 +72,10 @@ public class RssChannelHttpMessageConverterTests {
 		inputMessage.getHeaders().setContentType(new MediaType("application", "rss+xml", utf8));
 		Channel result = converter.read(Channel.class, inputMessage);
 		assertEquals("title", result.getTitle());
-		assertEquals("http://example.com", result.getLink());
+		assertEquals("https://example.com", result.getLink());
 		assertEquals("description", result.getDescription());
 
-		List items = result.getItems();
+		List<?> items = result.getItems();
 		assertEquals(2, items.size());
 
 		Item item1 = (Item) items.get(0);
@@ -86,7 +89,7 @@ public class RssChannelHttpMessageConverterTests {
 	public void write() throws IOException, SAXException {
 		Channel channel = new Channel("rss_2.0");
 		channel.setTitle("title");
-		channel.setLink("http://example.com");
+		channel.setLink("https://example.com");
 		channel.setDescription("description");
 
 		Item item1 = new Item();
@@ -95,7 +98,7 @@ public class RssChannelHttpMessageConverterTests {
 		Item item2 = new Item();
 		item2.setTitle("title2");
 
-		List items = new ArrayList(2);
+		List<Item> items = new ArrayList<Item>(2);
 		items.add(item1);
 		items.add(item2);
 		channel.setItems(items);
@@ -106,19 +109,18 @@ public class RssChannelHttpMessageConverterTests {
 		assertEquals("Invalid content-type", new MediaType("application", "rss+xml", utf8),
 				outputMessage.getHeaders().getContentType());
 		String expected = "<rss version=\"2.0\">" +
-				"<channel><title>title</title><link>http://example.com</link><description>description</description>" +
+				"<channel><title>title</title><link>https://example.com</link><description>description</description>" +
 				"<item><title>title1</title></item>" +
 				"<item><title>title2</title></item>" +
 				"</channel></rss>";
 		assertXMLEqual(expected, outputMessage.getBodyAsString(utf8));
-
 	}
 
 	@Test
 	public void writeOtherCharset() throws IOException, SAXException {
 		Channel channel = new Channel("rss_2.0");
 		channel.setTitle("title");
-		channel.setLink("http://example.com");
+		channel.setLink("https://example.com");
 		channel.setDescription("description");
 
 		String encoding = "ISO-8859-1";
@@ -133,6 +135,5 @@ public class RssChannelHttpMessageConverterTests {
 		assertEquals("Invalid content-type", new MediaType("application", "rss+xml", Charset.forName(encoding)),
 				outputMessage.getHeaders().getContentType());
 	}
-
 
 }

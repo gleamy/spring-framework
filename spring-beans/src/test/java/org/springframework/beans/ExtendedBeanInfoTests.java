@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2013 the original author or authors.
+ * Copyright 2002-2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -569,7 +569,7 @@ public class ExtendedBeanInfoTests {
 	 * IntrospectionException regarding a "type mismatch between indexed and non-indexed
 	 * methods" intermittently (approximately one out of every four times) under JDK 7
 	 * due to non-deterministic results from {@link Class#getDeclaredMethods()}.
-	 * See http://bugs.sun.com/view_bug.do?bug_id=7023180
+	 * See https://bugs.java.com/view_bug.do?bug_id=7023180
 	 * @see #cornerSpr9702()
 	 */
 	@Test
@@ -915,6 +915,15 @@ public class ExtendedBeanInfoTests {
 			assertThat(hasIndexedReadMethodForProperty(bi, "prop1"), is(false));
 			assertThat(hasIndexedWriteMethodForProperty(bi, "prop1"), is(false));
 		}
+	}
+
+	@Test  // SPR-12434
+	public void shouldDetectValidPropertiesAndIgnoreInvalidProperties() throws IntrospectionException {
+		BeanInfo bi = new ExtendedBeanInfo(Introspector.getBeanInfo(java.awt.Window.class));
+		assertThat(hasReadMethodForProperty(bi, "locationByPlatform"), is(true));
+		assertThat(hasWriteMethodForProperty(bi, "locationByPlatform"), is(true));
+		assertThat(hasIndexedReadMethodForProperty(bi, "locationByPlatform"), is(false));
+		assertThat(hasIndexedWriteMethodForProperty(bi, "locationByPlatform"), is(false));
 	}
 
 

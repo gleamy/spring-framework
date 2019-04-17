@@ -5,8 +5,8 @@
     xmlns:xi="http://www.w3.org/2001/XInclude"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="
-        http://docbook.org/ns/docbook http://www.docbook.org/xml/5.0/xsd/docbook.xsd
-        http://www.w3.org/1999/xlink http://www.docbook.org/xml/5.0/xsd/xlink.xsd">
+        http://docbook.org/ns/docbook https://www.docbook.org/xml/5.0/xsd/docbook.xsd
+        http://www.w3.org/1999/xlink https://www.docbook.org/xml/5.0/xsd/xlink.xsd">
   <title>Additional Capabilities of the
     <interfacename>ApplicationContext</interfacename></title>
 
@@ -17,7 +17,7 @@
     functionality for managing and manipulating beans, including in a
     programmatic way. The <literal>org.springframework.context</literal> package
     adds the <link
-    xl:href="http://static.springsource.org/spring-framework/docs/current/javadoc-api/org/springframework/context/ApplicationContext.html"
+    xl:href="https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/context/ApplicationContext.html"
     ><interfacename>ApplicationContext</interfacename></link> interface, which
     extends the <interfacename>BeanFactory</interfacename> interface, in
     addition to extending other interfaces to provide additional functionality
@@ -150,7 +150,7 @@
 message=Alligators rock!</programlisting>
 
     <programlisting language="java"><lineannotation># in exceptions.properties</lineannotation>
-argument.required=The '{0}' argument is required.</programlisting>
+argument.required=The {0} argument is required.</programlisting>
 
     <para>A program to execute the <classname>MessageSource</classname>
       functionality is shown in the next example. Remember that all
@@ -219,7 +219,7 @@ argument.required=The '{0}' argument is required.</programlisting>
     <programlisting>The userDao argument is required.</programlisting>
 
     <para>With regard to internationalization (i18n), Spring's various
-      <classname>MessageResource</classname> implementations follow the same
+      <classname>MessageSource</classname> implementations follow the same
       locale resolution and fallback rules as the standard JDK
       <classname>ResourceBundle</classname>. In short, and continuing with the
       example <literal>messageSource</literal> defined previously, if you want
@@ -233,7 +233,7 @@ argument.required=The '{0}' argument is required.</programlisting>
       messages will be resolved is specified manually.</para>
 
     <programlisting><lineannotation># in exceptions_en_GB.properties</lineannotation>
-argument.required=Ebagum lad, the '{0}' argument is required, I say, required.</programlisting>
+argument.required=Ebagum lad, the {0} argument is required, I say, required.</programlisting>
 
     <programlisting language="java">public static void main(final String[] args) {
   MessageSource resources = new ClassPathXmlApplicationContext("beans.xml");
@@ -497,9 +497,9 @@ argument.required=Ebagum lad, the '{0}' argument is required, I say, required.</
         between Spring beans within the same application context. However, for
         more sophisticated enterprise integration needs, the
         separately-maintained <link
-        xl:href="http://springsource.org/spring-integration">Spring
+        xl:href="https://springsource.org/spring-integration">Spring
         Integration</link> project provides complete support for building
-        lightweight, <link xl:href="http://www.enterpriseintegrationpatterns.com"
+        lightweight, <link xl:href="https://www.enterpriseintegrationpatterns.com"
         >pattern-oriented</link>, event-driven architectures that build upon
         the well-known Spring programming model.</para>
     </note>
@@ -563,20 +563,6 @@ argument.required=Ebagum lad, the '{0}' argument is required, I say, required.</
       programmatically by using one of the
       <interfacename>ApplicationContext</interfacename> implementations.</para>
 
-    <para>The <classname>ContextLoader</classname> mechanism comes in two
-      flavors: the <classname>ContextLoaderListener</classname> and the
-      <classname>ContextLoaderServlet</classname>. They have the same
-      functionality but differ in that the listener version is not reliable in
-      Servlet 2.3 containers. In the Servlet 2.4 specification, Servlet context
-      listeners must execute immediately after the Servlet context for the web
-      application is created and is available to service the first request (and
-      also when the Servlet context is about to be shut down). As such a Servlet
-      context listener is an ideal place to initialize the Spring
-      <interfacename>ApplicationContext</interfacename>. All things being equal,
-      you should probably prefer <classname>ContextLoaderListener</classname>;
-      for more information on compatibility, have a look at the Javadoc for the
-      <classname>ContextLoaderServlet</classname>.</para>
-
     <para>You can register an <interfacename>ApplicationContext</interfacename>
       using the <classname>ContextLoaderListener</classname> as follows:</para>
 
@@ -587,15 +573,7 @@ argument.required=Ebagum lad, the '{0}' argument is required, I say, required.</
 
 &lt;listener&gt;
 &lt;listener-class&gt;org.springframework.web.context.ContextLoaderListener&lt;/listener-class&gt;
-&lt;/listener&gt;
-
-<lineannotation>&lt;!-- or use the ContextLoaderServlet instead of the above listener</lineannotation><emphasis>
-&lt;servlet&gt;
-&lt;servlet-name&gt;context&lt;/servlet-name&gt;
-&lt;servlet-class&gt;org.springframework.web.context.ContextLoaderServlet&lt;/servlet-class&gt;
-&lt;load-on-startup&gt;1&lt;/load-on-startup&gt;
-&lt;/servlet&gt;
---</emphasis>&gt;</programlisting>
+&lt;/listener&gt;</programlisting>
 
     <para>The listener inspects the <literal>contextConfigLocation</literal>
       parameter. If the parameter does not exist, the listener uses
@@ -608,11 +586,6 @@ argument.required=Ebagum lad, the '{0}' argument is required, I say, required.</
       with "Context.xml", residing in the "WEB-INF" directory, and
       <literal>/WEB-INF/**/*Context.xml</literal>, for all such files in any
       subdirectory of "WEB-INF".</para>
-
-    <para>You can use <classname>ContextLoaderServlet</classname> instead of
-      <classname>ContextLoaderListener</classname>. The Servlet uses the
-      <literal>contextConfigLocation</literal> parameter just as the listener
-      does.</para>
   </section>
 
   <section xml:id="context-deploy-rar">
@@ -639,7 +612,7 @@ argument.required=Ebagum lad, the '{0}' argument is required, I say, required.</
       <interfacename>TaskExecutor</interfacename> abstraction.</para>
 
     <para>Check out the JavaDoc of the <link
-      xl:href="http://static.springsource.org/spring-framework/docs/current/javadoc-api/org/springframework/jca/context/SpringContextResourceAdapter.html"
+      xl:href="https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/jca/context/SpringContextResourceAdapter.html"
       >SpringContextResourceAdapter</link> class for the configuration details
       involved in RAR deployment.</para>
 

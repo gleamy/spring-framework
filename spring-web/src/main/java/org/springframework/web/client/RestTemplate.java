@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -81,27 +81,27 @@ import org.springframework.web.util.UriTemplate;
  * in that URL using either a {@code String} variable arguments array, or a {@code Map<String, String>}.
  * The string varargs variant expands the given template variables in order, so that
  * <pre class="code">
- * String result = restTemplate.getForObject("http://example.com/hotels/{hotel}/bookings/{booking}", String.class, "42",
+ * String result = restTemplate.getForObject("https://example.com/hotels/{hotel}/bookings/{booking}", String.class, "42",
  * "21");
  * </pre>
- * will perform a GET on {@code http://example.com/hotels/42/bookings/21}. The map variant expands the template based
+ * will perform a GET on {@code https://example.com/hotels/42/bookings/21}. The map variant expands the template based
  * on variable name, and is therefore more useful when using many variables, or when a single variable is used multiple
  * times. For example:
  * <pre class="code">
  * Map&lt;String, String&gt; vars = Collections.singletonMap("hotel", "42");
- * String result = restTemplate.getForObject("http://example.com/hotels/{hotel}/rooms/{hotel}", String.class, vars);
+ * String result = restTemplate.getForObject("https://example.com/hotels/{hotel}/rooms/{hotel}", String.class, vars);
  * </pre>
- * will perform a GET on {@code http://example.com/hotels/42/rooms/42}. Alternatively, there are {@link URI} variant
+ * will perform a GET on {@code https://example.com/hotels/42/rooms/42}. Alternatively, there are {@link URI} variant
  * methods ({@link #getForObject(URI, Class)}), which do not allow for URI templates, but allow you to reuse a single,
  * expanded URI multiple times.
  *
  * <p>Furthermore, the {@code String}-argument methods assume that the URL String is unencoded. This means that
  * <pre class="code">
- * restTemplate.getForObject("http://example.com/hotel list");
+ * restTemplate.getForObject("https://example.com/hotel list");
  * </pre>
- * will perform a GET on {@code http://example.com/hotel%20list}. As a result, any URL passed that is already encoded
- * will be encoded twice (i.e. {@code http://example.com/hotel%20list} will become {@code
- * http://example.com/hotel%2520list}). If this behavior is undesirable, use the {@code URI}-argument methods, which
+ * will perform a GET on {@code https://example.com/hotel%20list}. As a result, any URL passed that is already encoded
+ * will be encoded twice (i.e. {@code https://example.com/hotel%20list} will become {@code
+ * https://example.com/hotel%2520list}). If this behavior is undesirable, use the {@code URI}-argument methods, which
  * will not perform any URL encoding.
  *
  * <p>Objects passed to and returned from these methods are converted to and from HTTP messages by
@@ -156,6 +156,7 @@ public class RestTemplate extends InterceptingHttpAccessor implements RestOperat
 		this.messageConverters.add(new ResourceHttpMessageConverter());
 		this.messageConverters.add(new SourceHttpMessageConverter<Source>());
 		this.messageConverters.add(new AllEncompassingFormHttpMessageConverter());
+
 		if (romePresent) {
 			this.messageConverters.add(new AtomFeedHttpMessageConverter());
 			this.messageConverters.add(new RssChannelHttpMessageConverter());
@@ -200,8 +201,11 @@ public class RestTemplate extends InterceptingHttpAccessor implements RestOperat
 	 */
 	public void setMessageConverters(List<HttpMessageConverter<?>> messageConverters) {
 		Assert.notEmpty(messageConverters, "'messageConverters' must not be empty");
-		this.messageConverters.clear();
-		this.messageConverters.addAll(messageConverters);
+		// Take getMessageConverters() List as-is when passed in here
+		if (this.messageConverters != messageConverters) {
+			this.messageConverters.clear();
+			this.messageConverters.addAll(messageConverters);
+		}
 	}
 
 	/**
@@ -276,6 +280,7 @@ public class RestTemplate extends InterceptingHttpAccessor implements RestOperat
 		return execute(url, HttpMethod.GET, requestCallback, responseExtractor);
 	}
 
+
 	// HEAD
 
 	public HttpHeaders headForHeaders(String url, Object... urlVariables) throws RestClientException {
@@ -289,6 +294,7 @@ public class RestTemplate extends InterceptingHttpAccessor implements RestOperat
 	public HttpHeaders headForHeaders(URI url) throws RestClientException {
 		return execute(url, HttpMethod.HEAD, null, this.headersExtractor);
 	}
+
 
 	// POST
 
@@ -362,6 +368,7 @@ public class RestTemplate extends InterceptingHttpAccessor implements RestOperat
 		return execute(url, HttpMethod.POST, requestCallback, responseExtractor);
 	}
 
+
 	// PUT
 
 	public void put(String url, Object request, Object... urlVariables) throws RestClientException {
@@ -379,6 +386,7 @@ public class RestTemplate extends InterceptingHttpAccessor implements RestOperat
 		execute(url, HttpMethod.PUT, requestCallback, null);
 	}
 
+
 	// DELETE
 
 	public void delete(String url, Object... urlVariables) throws RestClientException {
@@ -392,6 +400,7 @@ public class RestTemplate extends InterceptingHttpAccessor implements RestOperat
 	public void delete(URI url) throws RestClientException {
 		execute(url, HttpMethod.DELETE, null, null);
 	}
+
 
 	// OPTIONS
 
@@ -409,6 +418,7 @@ public class RestTemplate extends InterceptingHttpAccessor implements RestOperat
 		HttpHeaders headers = execute(url, HttpMethod.OPTIONS, null, this.headersExtractor);
 		return headers.getAllow();
 	}
+
 
 	// exchange
 

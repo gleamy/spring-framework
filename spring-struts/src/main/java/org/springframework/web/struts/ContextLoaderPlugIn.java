@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -82,7 +82,7 @@ import org.springframework.web.context.support.XmlWebApplicationContext;
  * Struts module, specifying appropriate "contextConfigLocation" parameters.
  *
  * <p>Note: The idea of delegating to Spring-managed Struts Actions originated in
- * Don Brown's <a href="http://struts.sourceforge.net/struts-spring">Spring Struts Plugin</a>.
+ * Don Brown's <a href="http://struts.sourceforge.net/struts-spring/">Spring Struts Plugin</a>.
  * ContextLoaderPlugIn and DelegatingActionProxy constitute a clean-room
  * implementation of the same idea, essentially superseding the original plugin.
  * Many thanks to Don Brown and Matt Raible for the original work and for the

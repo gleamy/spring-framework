@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2010 the original author or authors.
+ * Copyright 2002-2015 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,7 +22,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
@@ -202,7 +201,8 @@ public class TableMetaDataContext {
 	 * @param generatedKeyNames name of generated keys
 	 */
 	public void processMetaData(DataSource dataSource, List<String> declaredColumns, String[] generatedKeyNames) {
-		this.metaDataProvider = TableMetaDataProviderFactory.createMetaDataProvider(dataSource, this, this.nativeJdbcExtractor);
+		this.metaDataProvider =
+				TableMetaDataProviderFactory.createMetaDataProvider(dataSource, this, this.nativeJdbcExtractor);
 		this.tableColumns = reconcileColumnsToUse(declaredColumns, generatedKeyNames);
 	}
 
@@ -239,7 +239,7 @@ public class TableMetaDataContext {
 		List<Object> values = new ArrayList<Object>();
 		// for parameter source lookups we need to provide caseinsensitive lookup support since the
 		// database metadata is not necessarily providing case sensitive column names
-		Map caseInsensitiveParameterNames =
+		Map<String, String> caseInsensitiveParameterNames =
 				SqlParameterSourceUtils.extractCaseInsensitiveParameterNames(parameterSource);
 		for (String column : this.tableColumns) {
 			if (parameterSource.hasValue(column)) {
@@ -259,7 +259,7 @@ public class TableMetaDataContext {
 						if (caseInsensitiveParameterNames.containsKey(lowerCaseName)) {
 							values.add(
 									SqlParameterSourceUtils.getTypedValue(parameterSource,
-											(String) caseInsensitiveParameterNames.get(lowerCaseName)));
+											caseInsensitiveParameterNames.get(lowerCaseName)));
 						}
 						else {
 							values.add(null);
@@ -292,21 +292,21 @@ public class TableMetaDataContext {
 	 * Build the insert string based on configuration and metadata information
 	 * @return the insert string to be used
 	 */
-	public String createInsertString(String[] generatedKeyNames) {
+	public String createInsertString(String... generatedKeyNames) {
 		HashSet<String> keys = new HashSet<String>(generatedKeyNames.length);
 		for (String key : generatedKeyNames) {
 			keys.add(key.toUpperCase());
 		}
 		StringBuilder insertStatement = new StringBuilder();
 		insertStatement.append("INSERT INTO ");
-		if (this.getSchemaName() != null) {
-			insertStatement.append(this.getSchemaName());
+		if (getSchemaName() != null) {
+			insertStatement.append(getSchemaName());
 			insertStatement.append(".");
 		}
-		insertStatement.append(this.getTableName());
+		insertStatement.append(getTableName());
 		insertStatement.append(" (");
 		int columnCount = 0;
-		for (String columnName : this.getTableColumns()) {
+		for (String columnName : getTableColumns()) {
 			if (!keys.contains(columnName.toUpperCase())) {
 				columnCount++;
 				if (columnCount > 1) {
@@ -319,11 +319,11 @@ public class TableMetaDataContext {
 		if (columnCount < 1) {
 			if (this.generatedKeyColumnsUsed) {
 				logger.info("Unable to locate non-key columns for table '" +
-						this.getTableName() + "' so an empty insert statement is generated");
+						getTableName() + "' so an empty insert statement is generated");
 			}
 			else {
 				throw new InvalidDataAccessApiUsageException("Unable to locate columns for table '" +
-						this.getTableName() + "' so an insert statement can't be generated");
+						getTableName() + "' so an insert statement can't be generated");
 			}
 		}
 		for (int i = 0; i < columnCount; i++) {
@@ -341,14 +341,14 @@ public class TableMetaDataContext {
 	 * @return the array of types to be used
 	 */
 	public int[] createInsertTypes() {
-		int[] types = new int[this.getTableColumns().size()];
+		int[] types = new int[getTableColumns().size()];
 		List<TableParameterMetaData> parameters = this.metaDataProvider.getTableParameterMetaData();
 		Map<String, TableParameterMetaData> parameterMap = new HashMap<String, TableParameterMetaData>(parameters.size());
 		for (TableParameterMetaData tpmd : parameters) {
 			parameterMap.put(tpmd.getParameterName().toUpperCase(), tpmd);
 		}
 		int typeIndx = 0;
-		for (String column : this.getTableColumns()) {
+		for (String column : getTableColumns()) {
 			if (column == null) {
 				types[typeIndx] = SqlTypeValue.TYPE_UNKNOWN;
 			}

@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2014 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -285,7 +285,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		// Use prototype bean definition, to avoid registering bean as dependent bean.
 		RootBeanDefinition bd = new RootBeanDefinition(beanClass);
 		bd.setScope(SCOPE_PROTOTYPE);
-		bd.allowCaching = false;
+		bd.allowCaching = ClassUtils.isCacheSafe(beanClass, getBeanClassLoader());
 		return (T) createBean(beanClass.getName(), bd, null);
 	}
 
@@ -293,7 +293,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		// Use non-singleton bean definition, to avoid registering bean as dependent bean.
 		RootBeanDefinition bd = new RootBeanDefinition(ClassUtils.getUserClass(existingBean));
 		bd.setScope(BeanDefinition.SCOPE_PROTOTYPE);
-		bd.allowCaching = false;
+		bd.allowCaching = ClassUtils.isCacheSafe(bd.getBeanClass(), getBeanClassLoader());
 		BeanWrapper bw = new BeanWrapperImpl(existingBean);
 		initBeanWrapper(bw);
 		populateBean(bd.getBeanClass().getName(), bd, bw);
@@ -312,7 +312,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 				bd = new RootBeanDefinition(mbd);
 			}
 			bd.setScope(BeanDefinition.SCOPE_PROTOTYPE);
-			bd.allowCaching = false;
+			bd.allowCaching = ClassUtils.isCacheSafe(ClassUtils.getUserClass(existingBean), getBeanClassLoader());
 		}
 		BeanWrapper bw = new BeanWrapperImpl(existingBean);
 		initBeanWrapper(bw);
@@ -425,9 +425,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * @see #doCreateBean
 	 */
 	@Override
-	protected Object createBean(final String beanName, final RootBeanDefinition mbd, final Object[] args)
-			throws BeanCreationException {
-
+	protected Object createBean(String beanName, RootBeanDefinition mbd, Object[] args) throws BeanCreationException {
 		if (logger.isDebugEnabled()) {
 			logger.debug("Creating instance of bean '" + beanName + "'");
 		}
@@ -596,7 +594,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	}
 
 	/**
-	 * Determine the bean type for the given bean definition which is based on
+	 * Determine the target type for the given bean definition which is based on
 	 * a factory method. Only called if there is no singleton instance registered
 	 * for the target bean already.
 	 * <p>This implementation determines the type matching {@link #createBean}'s
@@ -606,7 +604,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * @param mbd the merged bean definition for the bean
 	 * @param typesToMatch the types to match in case of internal type matching purposes
 	 * (also signals that the returned {@code Class} will never be exposed to application code)
-	 * @return the type for the bean if determinable, or {@code null} else
+	 * @return the type for the bean if determinable, or {@code null} otherwise
 	 * @see #createBean
 	 */
 	protected Class<?> getTypeForFactoryMethod(String beanName, RootBeanDefinition mbd, Class[] typesToMatch) {
@@ -711,6 +709,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		final Holder objectType = new Holder();
 		String factoryBeanName = mbd.getFactoryBeanName();
 		final String factoryMethodName = mbd.getFactoryMethodName();
+
 		if (factoryBeanName != null && factoryMethodName != null) {
 			// Try to obtain the FactoryBean's object type without instantiating it at all.
 			BeanDefinition fbDef = getBeanDefinition(factoryBeanName);
@@ -744,10 +743,14 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			if (objectType.value != null) {
 				return objectType.value;
 			}
+			else {
+				// No type found for shortcut FactoryBean instance:
+				// fall back to full creation of the FactoryBean instance.
+				return super.getTypeForFactoryBean(beanName, mbd);
+			}
 		}
 
-		// No type found - fall back to full creation of the FactoryBean instance.
-		return super.getTypeForFactoryBean(beanName, mbd);
+		return null;
 	}
 
 	/**
@@ -766,7 +769,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 					SmartInstantiationAwareBeanPostProcessor ibp = (SmartInstantiationAwareBeanPostProcessor) bp;
 					exposedObject = ibp.getEarlyBeanReference(exposedObject, beanName);
 					if (exposedObject == null) {
-						return exposedObject;
+						return null;
 					}
 				}
 			}
@@ -781,8 +784,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 	/**
 	 * Obtain a "shortcut" singleton FactoryBean instance to use for a
-	 * {@code getObjectType()} call, without full initialization
-	 * of the FactoryBean.
+	 * {@code getObjectType()} call, without full initialization of the FactoryBean.
 	 * @param beanName the name of the bean
 	 * @param mbd the bean definition for the bean
 	 * @return the FactoryBean instance, or {@code null} to indicate
@@ -794,7 +796,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			if (bw != null) {
 				return (FactoryBean<?>) bw.getWrappedInstance();
 			}
-			if (isSingletonCurrentlyInCreation(beanName)) {
+			if (isSingletonCurrentlyInCreation(beanName) ||
+					(mbd.getFactoryBeanName() != null && isSingletonCurrentlyInCreation(mbd.getFactoryBeanName()))) {
 				return null;
 			}
 			Object instance = null;
@@ -822,8 +825,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 	/**
 	 * Obtain a "shortcut" non-singleton FactoryBean instance to use for a
-	 * {@code getObjectType()} call, without full initialization
-	 * of the FactoryBean.
+	 * {@code getObjectType()} call, without full initialization of the FactoryBean.
 	 * @param beanName the name of the bean
 	 * @param mbd the bean definition for the bean
 	 * @return the FactoryBean instance, or {@code null} to indicate

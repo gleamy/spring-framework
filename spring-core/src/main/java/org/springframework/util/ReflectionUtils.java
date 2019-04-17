@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2014 the original author or authors.
+ * Copyright 2002-2015 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,6 +26,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -45,10 +46,22 @@ import java.util.regex.Pattern;
 public abstract class ReflectionUtils {
 
 	/**
+	 * Naming prefix for CGLIB-renamed methods.
+	 * @see #isCglibRenamedMethod
+	 */
+	private static final String CGLIB_RENAMED_METHOD_PREFIX = "CGLIB$";
+
+	/**
 	 * Pattern for detecting CGLIB-renamed methods.
 	 * @see #isCglibRenamedMethod
 	 */
-	private static final Pattern CGLIB_RENAMED_METHOD_PATTERN = Pattern.compile("CGLIB\\$(.+)\\$\\d+");
+	private static final Pattern CGLIB_RENAMED_METHOD_PATTERN = Pattern.compile("(.+)\\$\\d+");
+
+	/**
+	 * Cache for {@link Class#getDeclaredMethods()}, allowing for fast resolution.
+	 */
+	private static final Map<Class<?>, Method[]> declaredMethodsCache =
+			new ConcurrentReferenceHashMap<Class<?>, Method[]>(256);
 
 
 	/**
@@ -78,7 +91,8 @@ public abstract class ReflectionUtils {
 		while (!Object.class.equals(searchType) && searchType != null) {
 			Field[] fields = searchType.getDeclaredFields();
 			for (Field field : fields) {
-				if ((name == null || name.equals(field.getName())) && (type == null || type.equals(field.getType()))) {
+				if ((name == null || name.equals(field.getName())) &&
+						(type == null || type.equals(field.getType()))) {
 					return field;
 				}
 			}
@@ -156,7 +170,7 @@ public abstract class ReflectionUtils {
 		Assert.notNull(name, "Method name must not be null");
 		Class<?> searchType = clazz;
 		while (searchType != null) {
-			Method[] methods = (searchType.isInterface() ? searchType.getMethods() : searchType.getDeclaredMethods());
+			Method[] methods = (searchType.isInterface() ? searchType.getMethods() : getDeclaredMethods(searchType));
 			for (Method method : methods) {
 				if (name.equals(method.getName()) &&
 						(paramTypes == null || Arrays.equals(paramTypes, method.getParameterTypes()))) {
@@ -397,7 +411,9 @@ public abstract class ReflectionUtils {
 	 * @see org.springframework.cglib.proxy.Enhancer#rename
 	 */
 	public static boolean isCglibRenamedMethod(Method renamedMethod) {
-		return CGLIB_RENAMED_METHOD_PATTERN.matcher(renamedMethod.getName()).matches();
+		String name = renamedMethod.getName();
+		return (name.startsWith(CGLIB_RENAMED_METHOD_PREFIX) &&
+				CGLIB_RENAMED_METHOD_PATTERN.matcher(name.substring(CGLIB_RENAMED_METHOD_PREFIX.length())).matches());
 	}
 
 	/**
@@ -409,7 +425,8 @@ public abstract class ReflectionUtils {
 	 * @see java.lang.reflect.Field#setAccessible
 	 */
 	public static void makeAccessible(Field field) {
-		if ((!Modifier.isPublic(field.getModifiers()) || !Modifier.isPublic(field.getDeclaringClass().getModifiers()) ||
+		if ((!Modifier.isPublic(field.getModifiers()) ||
+				!Modifier.isPublic(field.getDeclaringClass().getModifiers()) ||
 				Modifier.isFinal(field.getModifiers())) && !field.isAccessible()) {
 			field.setAccessible(true);
 		}
@@ -424,8 +441,8 @@ public abstract class ReflectionUtils {
 	 * @see java.lang.reflect.Method#setAccessible
 	 */
 	public static void makeAccessible(Method method) {
-		if ((!Modifier.isPublic(method.getModifiers()) || !Modifier.isPublic(method.getDeclaringClass().getModifiers()))
-				&& !method.isAccessible()) {
+		if ((!Modifier.isPublic(method.getModifiers()) ||
+				!Modifier.isPublic(method.getDeclaringClass().getModifiers())) && !method.isAccessible()) {
 			method.setAccessible(true);
 		}
 	}
@@ -439,8 +456,8 @@ public abstract class ReflectionUtils {
 	 * @see java.lang.reflect.Constructor#setAccessible
 	 */
 	public static void makeAccessible(Constructor<?> ctor) {
-		if ((!Modifier.isPublic(ctor.getModifiers()) || !Modifier.isPublic(ctor.getDeclaringClass().getModifiers()))
-				&& !ctor.isAccessible()) {
+		if ((!Modifier.isPublic(ctor.getModifiers()) ||
+				!Modifier.isPublic(ctor.getDeclaringClass().getModifiers())) && !ctor.isAccessible()) {
 			ctor.setAccessible(true);
 		}
 	}
@@ -450,11 +467,11 @@ public abstract class ReflectionUtils {
 	 * class and superclasses.
 	 * <p>The same named method occurring on subclass and superclass will appear
 	 * twice, unless excluded by a {@link MethodFilter}.
-	 * @param clazz class to start looking at
+	 * @param clazz the class to introspect
 	 * @param mc the callback to invoke for each method
 	 * @see #doWithMethods(Class, MethodCallback, MethodFilter)
 	 */
-	public static void doWithMethods(Class<?> clazz, MethodCallback mc) throws IllegalArgumentException {
+	public static void doWithMethods(Class<?> clazz, MethodCallback mc) {
 		doWithMethods(clazz, mc, null);
 	}
 
@@ -463,15 +480,13 @@ public abstract class ReflectionUtils {
 	 * class and superclasses (or given interface and super-interfaces).
 	 * <p>The same named method occurring on subclass and superclass will appear
 	 * twice, unless excluded by the specified {@link MethodFilter}.
-	 * @param clazz class to start looking at
+	 * @param clazz the class to introspect
 	 * @param mc the callback to invoke for each method
 	 * @param mf the filter that determines the methods to apply the callback to
 	 */
-	public static void doWithMethods(Class<?> clazz, MethodCallback mc, MethodFilter mf)
-			throws IllegalArgumentException {
-
+	public static void doWithMethods(Class<?> clazz, MethodCallback mc, MethodFilter mf) {
 		// Keep backing up the inheritance hierarchy.
-		Method[] methods = clazz.getDeclaredMethods();
+		Method[] methods = getDeclaredMethods(clazz);
 		for (Method method : methods) {
 			if (mf != null && !mf.matches(method)) {
 				continue;
@@ -480,8 +495,7 @@ public abstract class ReflectionUtils {
 				mc.doWith(method);
 			}
 			catch (IllegalAccessException ex) {
-				throw new IllegalStateException("Shouldn't be illegal to access method '" + method.getName()
-						+ "': " + ex);
+				throw new IllegalStateException("Not allowed to access method '" + method.getName() + "': " + ex);
 			}
 		}
 		if (clazz.getSuperclass() != null) {
@@ -495,10 +509,11 @@ public abstract class ReflectionUtils {
 	}
 
 	/**
-	 * Get all declared methods on the leaf class and all superclasses. Leaf
-	 * class methods are included first.
+	 * Get all declared methods on the leaf class and all superclasses.
+	 * Leaf class methods are included first.
+	 * @param leafClass the class to introspect
 	 */
-	public static Method[] getAllDeclaredMethods(Class<?> leafClass) throws IllegalArgumentException {
+	public static Method[] getAllDeclaredMethods(Class<?> leafClass) {
 		final List<Method> methods = new ArrayList<Method>(32);
 		doWithMethods(leafClass, new MethodCallback() {
 			public void doWith(Method method) {
@@ -509,11 +524,12 @@ public abstract class ReflectionUtils {
 	}
 
 	/**
-	 * Get the unique set of declared methods on the leaf class and all superclasses. Leaf
-	 * class methods are included first and while traversing the superclass hierarchy any methods found
-	 * with signatures matching a method already included are filtered out.
+	 * Get the unique set of declared methods on the leaf class and all superclasses.
+	 * Leaf class methods are included first and while traversing the superclass hierarchy
+	 * any methods found with signatures matching a method already included are filtered out.
+	 * @param leafClass the class to introspect
 	 */
-	public static Method[] getUniqueDeclaredMethods(Class<?> leafClass) throws IllegalArgumentException {
+	public static Method[] getUniqueDeclaredMethods(Class<?> leafClass) {
 		final List<Method> methods = new ArrayList<Method>(32);
 		doWithMethods(leafClass, new MethodCallback() {
 			public void doWith(Method method) {
@@ -545,12 +561,25 @@ public abstract class ReflectionUtils {
 	}
 
 	/**
+	 * This variant retrieves {@link Class#getDeclaredMethods()} from a local cache
+	 * in order to avoid the JVM's SecurityManager check and defensive array copying.
+	 */
+	private static Method[] getDeclaredMethods(Class<?> clazz) {
+		Method[] result = declaredMethodsCache.get(clazz);
+		if (result == null) {
+			result = clazz.getDeclaredMethods();
+			declaredMethodsCache.put(clazz, result);
+		}
+		return result;
+	}
+
+	/**
 	 * Invoke the given callback on all fields in the target class, going up the
 	 * class hierarchy to get all declared fields.
 	 * @param clazz the target class to analyze
 	 * @param fc the callback to invoke for each field
 	 */
-	public static void doWithFields(Class<?> clazz, FieldCallback fc) throws IllegalArgumentException {
+	public static void doWithFields(Class<?> clazz, FieldCallback fc) {
 		doWithFields(clazz, fc, null);
 	}
 
@@ -561,15 +590,12 @@ public abstract class ReflectionUtils {
 	 * @param fc the callback to invoke for each field
 	 * @param ff the filter that determines the fields to apply the callback to
 	 */
-	public static void doWithFields(Class<?> clazz, FieldCallback fc, FieldFilter ff)
-			throws IllegalArgumentException {
-
+	public static void doWithFields(Class<?> clazz, FieldCallback fc, FieldFilter ff) {
 		// Keep backing up the inheritance hierarchy.
 		Class<?> targetClass = clazz;
 		do {
 			Field[] fields = targetClass.getDeclaredFields();
 			for (Field field : fields) {
-				// Skip static and final fields.
 				if (ff != null && !ff.matches(field)) {
 					continue;
 				}
@@ -577,8 +603,7 @@ public abstract class ReflectionUtils {
 					fc.doWith(field);
 				}
 				catch (IllegalAccessException ex) {
-					throw new IllegalStateException(
-							"Shouldn't be illegal to access field '" + field.getName() + "': " + ex);
+					throw new IllegalStateException("Not allowed to access field '" + field.getName() + "': " + ex);
 				}
 			}
 			targetClass = targetClass.getSuperclass();
@@ -590,9 +615,8 @@ public abstract class ReflectionUtils {
 	 * Given the source object and the destination, which must be the same class
 	 * or a subclass, copy all fields, including inherited fields. Designed to
 	 * work on objects with public no-arg constructors.
-	 * @throws IllegalArgumentException if the arguments are incompatible
 	 */
-	public static void shallowCopyFieldState(final Object src, final Object dest) throws IllegalArgumentException {
+	public static void shallowCopyFieldState(final Object src, final Object dest) {
 		if (src == null) {
 			throw new IllegalArgumentException("Source for field copy cannot be null");
 		}
@@ -600,8 +624,8 @@ public abstract class ReflectionUtils {
 			throw new IllegalArgumentException("Destination for field copy cannot be null");
 		}
 		if (!src.getClass().isAssignableFrom(dest.getClass())) {
-			throw new IllegalArgumentException("Destination class [" + dest.getClass().getName()
-					+ "] must be same or subclass as source class [" + src.getClass().getName() + "]");
+			throw new IllegalArgumentException("Destination class [" + dest.getClass().getName() +
+					"] must be same or subclass as source class [" + src.getClass().getName() + "]");
 		}
 		doWithFields(src.getClass(), new FieldCallback() {
 			public void doWith(Field field) throws IllegalArgumentException, IllegalAccessException {

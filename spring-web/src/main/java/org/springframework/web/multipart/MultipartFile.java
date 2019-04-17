@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2012 the original author or authors.
+ * Copyright 2002-2015 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -94,6 +94,9 @@ public interface MultipartFile {
 	 * <p>If the file has been moved in the filesystem, this operation cannot
 	 * be invoked again. Therefore, call this method just once to be able to
 	 * work with any storage mechanism.
+	 * <p><strong>Note:</strong> when using Servlet 3.0 multipart support you
+	 * need to configure the location relative to which files will be copied
+	 * as explained in {@link javax.servlet.http.Part#write}.
 	 * @param dest the destination file
 	 * @throws IOException in case of reading or writing errors
 	 * @throws IllegalStateException if the file has already been moved

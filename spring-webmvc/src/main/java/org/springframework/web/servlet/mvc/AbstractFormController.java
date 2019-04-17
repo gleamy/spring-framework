@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -228,7 +228,7 @@ public abstract class AbstractFormController extends BaseCommandController {
 	 * submitted.
 	 * <p>If you need to have per-form, per-session state management (that is,
 	 * stateful web conversations), the recommendation is to use
-	 * <a href="http://www.springframework.org/webflow">Spring WebFlow</a>,
+	 * <a href="https://www.springframework.org/webflow">Spring WebFlow</a>,
 	 * which has full support for conversations and has a much more flexible
 	 * usage model overall.
 	 * @param sessionForm {@code true} if session form mode is to be activated

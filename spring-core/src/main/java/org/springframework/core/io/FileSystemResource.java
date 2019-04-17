@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2012 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -30,7 +30,7 @@ import org.springframework.util.StringUtils;
 
 /**
  * {@link Resource} implementation for {@code java.io.File} handles.
- * Obviously supports resolution as File, and also as URL.
+ * Supports resolution as a {@code File} and also as a {@code URL}.
  * Implements the extended {@link WritableResource} interface.
  *
  * @author Juergen Hoeller
@@ -45,7 +45,7 @@ public class FileSystemResource extends AbstractResource implements WritableReso
 
 
 	/**
-	 * Create a new FileSystemResource from a File handle.
+	 * Create a new {@code FileSystemResource} from a {@link File} handle.
 	 * <p>Note: When building relative resources via {@link #createRelative},
 	 * the relative path will apply <i>at the same directory level</i>:
 	 * e.g. new File("C:/dir1"), relative path "dir2" -> "C:/dir2"!
@@ -62,7 +62,7 @@ public class FileSystemResource extends AbstractResource implements WritableReso
 	}
 
 	/**
-	 * Create a new FileSystemResource from a file path.
+	 * Create a new {@code FileSystemResource} from a file path.
 	 * <p>Note: When building relative resources via {@link #createRelative},
 	 * it makes a difference whether the specified resource base path here
 	 * ends with a slash or not. In the case of "C:/dir1/", relative paths
@@ -77,13 +77,13 @@ public class FileSystemResource extends AbstractResource implements WritableReso
 		this.path = StringUtils.cleanPath(path);
 	}
 
+
 	/**
 	 * Return the file path for this resource.
 	 */
 	public final String getPath() {
 		return this.path;
 	}
-
 
 	/**
 	 * This implementation returns whether the underlying file exists.

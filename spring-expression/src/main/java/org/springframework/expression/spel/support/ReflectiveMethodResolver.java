@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2013 the original author or authors.
+ * Copyright 2002-2015 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,12 +17,13 @@
 package org.springframework.expression.spel.support;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -65,13 +66,14 @@ public class ReflectiveMethodResolver implements MethodResolver {
 	}
 
 	/**
-	 * This constructors allows the ReflectiveMethodResolver to be configured such that it will
-	 * use a distance computation to check which is the better of two close matches (when there
-	 * are multiple matches). Using the distance computation is intended to ensure matches
-	 * are more closely representative of what a Java compiler would do when taking into
-	 * account boxing/unboxing and whether the method candidates are declared to handle a
-	 * supertype of the type (of the argument) being passed in.
-	 * @param useDistance true if distance computation should be used when calculating matches
+	 * This constructor allows the ReflectiveMethodResolver to be configured such that it
+	 * will use a distance computation to check which is the better of two close matches
+	 * (when there are multiple matches). Using the distance computation is intended to
+	 * ensure matches are more closely representative of what a Java compiler would do
+	 * when taking into account boxing/unboxing and whether the method candidates are
+	 * declared to handle a supertype of the type (of the argument) being passed in.
+	 * @param useDistance {@code true} if distance computation should be used when
+	 * calculating matches; {@code false} otherwise
 	 */
 	public ReflectiveMethodResolver(boolean useDistance) {
 		this.useDistance = useDistance;
@@ -94,10 +96,10 @@ public class ReflectiveMethodResolver implements MethodResolver {
 	/**
 	 * Locate a method on a type. There are three kinds of match that might occur:
 	 * <ol>
-	 * <li>An exact match where the types of the arguments match the types of the constructor
-	 * <li>An in-exact match where the types we are looking for are subtypes of those defined on the constructor
-	 * <li>A match where we are able to convert the arguments into those expected by the constructor,
-	 * according to the registered type converter.
+	 * <li>an exact match where the types of the arguments match the types of the constructor
+	 * <li>an in-exact match where the types we are looking for are subtypes of those defined on the constructor
+	 * <li>a match where we are able to convert the arguments into those expected by the constructor,
+	 * according to the registered type converter
 	 * </ol>
 	 */
 	public MethodExecutor resolve(EvaluationContext context, Object targetObject, String name,
@@ -106,7 +108,7 @@ public class ReflectiveMethodResolver implements MethodResolver {
 		try {
 			TypeConverter typeConverter = context.getTypeConverter();
 			Class<?> type = (targetObject instanceof Class ? (Class<?>) targetObject : targetObject.getClass());
-			List<Method> methods = new ArrayList<Method>(Arrays.asList(getMethods(type, targetObject)));
+			List<Method> methods = new ArrayList<Method>(getMethods(type, targetObject));
 
 			// If a filter is registered for this type, call it
 			MethodFilter filter = (this.filters != null ? this.filters.get(type) : null);
@@ -121,7 +123,19 @@ public class ReflectiveMethodResolver implements MethodResolver {
 					public int compare(Method m1, Method m2) {
 						int m1pl = m1.getParameterTypes().length;
 						int m2pl = m2.getParameterTypes().length;
-						return (new Integer(m1pl)).compareTo(m2pl);
+						// varargs methods go last
+						if (m1pl == m2pl) {
+						    if (!m1.isVarArgs() && m2.isVarArgs()) {
+						    	return -1;
+						    }
+						    else if (m1.isVarArgs() && !m2.isVarArgs()) {
+						    	return 1;
+						    }
+						    else {
+						    	return 0;
+						    }
+						}
+						return (m1pl < m2pl ? -1 : (m1pl > m2pl ? 1 : 0));
 					}
 				});
 			}
@@ -161,14 +175,17 @@ public class ReflectiveMethodResolver implements MethodResolver {
 							return new ReflectiveMethodExecutor(method, null);
 						}
 						else if (matchInfo.isCloseMatch()) {
-							if (!this.useDistance) {
-								closeMatch = method;
+							if (this.useDistance) {
+								int matchDistance = ReflectionHelper.getTypeDifferenceWeight(paramDescriptors, argumentTypes);
+								if (closeMatch == null || matchDistance < closeMatchDistance) {
+									// This is a better match...
+									closeMatch = method;
+									closeMatchDistance = matchDistance;
+								}
 							}
 							else {
-								int matchDistance = ReflectionHelper.getTypeDifferenceWeight(paramDescriptors, argumentTypes);
-								if (matchDistance < closeMatchDistance) {
-									// This is a better match...
-									closeMatchDistance = matchDistance;
+								// Take this as a close match if there isn't one already
+								if (closeMatch == null) {
 									closeMatch = method;
 								}
 							}
@@ -201,14 +218,23 @@ public class ReflectiveMethodResolver implements MethodResolver {
 		}
 	}
 
-	private Method[] getMethods(Class<?> type, Object targetObject) {
+	private Collection<Method> getMethods(Class<?> type, Object targetObject) {
 		if (targetObject instanceof Class) {
-			Set<Method> methods = new HashSet<Method>();
-			methods.addAll(Arrays.asList(getMethods(type)));
-			methods.addAll(Arrays.asList(getMethods(targetObject.getClass())));
-			return methods.toArray(new Method[methods.size()]);
+			Set<Method> result = new LinkedHashSet<Method>();
+			// Add these so that static methods are invocable on the type: e.g. Float.valueOf(..)
+			Method[] methods = getMethods(type);
+			for (Method method : methods) {
+				if (Modifier.isStatic(method.getModifiers())) {
+					result.add(method);
+				}
+			}
+			// Also expose methods from java.lang.Class itself
+			result.addAll(Arrays.asList(getMethods(Class.class)));
+			return result;
 		}
-		return getMethods(type);
+		else {
+			return Arrays.asList(getMethods(type));
+		}
 	}
 
 	/**

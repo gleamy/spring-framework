@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -36,7 +36,7 @@ import org.springframework.core.NamedThreadLocal;
  *
  * <p>For an implementation of a thread-based {@code Scope} with support for
  * destruction callbacks, refer to the
- * <a href="http://www.springbyexample.org/examples/custom-thread-scope-module.html">
+ * <a href="https://www.springbyexample.org/examples/custom-thread-scope-module.html">
 *  Spring by Example Custom Thread Scope Module</a>.
  *
  * <p>Thanks to Eugene Kuleshov for submitting the original prototype for a thread scope!

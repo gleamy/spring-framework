@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -121,7 +121,7 @@ public abstract class MockMvcResultMatchers {
 
 	/**
 	 * Access to response body assertions using a <a
-	 * href="http://goessner.net/articles/JsonPath/">JSONPath</a> expression to
+	 * href="https://goessner.net/articles/JsonPath/">JSONPath</a> expression to
 	 * inspect a specific subset of the body. The JSON path expression can be a
 	 * parameterized string using formatting specifiers as defined in
 	 * {@link String#format(String, Object...)}.
@@ -135,7 +135,7 @@ public abstract class MockMvcResultMatchers {
 
 	/**
 	 * Access to response body assertions using a <a
-	 * href="http://goessner.net/articles/JsonPath/">JSONPath</a> expression to
+	 * href="https://goessner.net/articles/JsonPath/">JSONPath</a> expression to
 	 * inspect a specific subset of the body and a Hamcrest match for asserting
 	 * the value found at the JSON path.
 	 *

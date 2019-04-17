@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -389,7 +389,8 @@ public class BeanWrapperImpl extends AbstractPropertyAccessor implements BeanWra
 					if (pd.getReadMethod() != null || pd.getWriteMethod() != null) {
 						return TypeDescriptor.nested(property(pd), tokens.keys.length);
 					}
-				} else {
+				}
+				else {
 					if (pd.getReadMethod() != null || pd.getWriteMethod() != null) {
 						return new TypeDescriptor(property(pd));
 					}
@@ -1024,7 +1025,7 @@ public class BeanWrapperImpl extends AbstractPropertyAccessor implements BeanWra
 			else {
 				throw new InvalidPropertyException(getRootClass(), this.nestedPath + propertyName,
 						"Property referenced in indexed property path '" + propertyName +
-						"' is neither an array nor a List nor a Map; returned value was [" + pv.getValue() + "]");
+						"' is neither an array nor a List nor a Map; returned value was [" + propValue + "]");
 			}
 		}
 

@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2013 the original author or authors.
+ * Copyright 2002-2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -50,6 +50,7 @@ import org.springframework.beans.factory.config.DestructionAwareBeanPostProcesso
 import org.springframework.beans.factory.config.InstantiationAwareBeanPostProcessor;
 import org.springframework.beans.factory.support.MergedBeanDefinitionPostProcessor;
 import org.springframework.beans.factory.support.RootBeanDefinition;
+import org.springframework.core.BridgeMethodResolver;
 import org.springframework.core.Ordered;
 import org.springframework.core.PriorityOrdered;
 import org.springframework.jndi.JndiLocatorDelegate;
@@ -320,7 +321,7 @@ public class PersistenceAnnotationBeanPostProcessor
 
 	public void postProcessMergedBeanDefinition(RootBeanDefinition beanDefinition, Class<?> beanType, String beanName) {
 		if (beanType != null) {
-			InjectionMetadata metadata = findPersistenceMetadata(beanName, beanType);
+			InjectionMetadata metadata = findPersistenceMetadata(beanName, beanType, null);
 			metadata.checkConfigMembers(beanDefinition);
 		}
 	}
@@ -336,7 +337,7 @@ public class PersistenceAnnotationBeanPostProcessor
 	public PropertyValues postProcessPropertyValues(
 			PropertyValues pvs, PropertyDescriptor[] pds, Object bean, String beanName) throws BeansException {
 
-		InjectionMetadata metadata = findPersistenceMetadata(beanName, bean.getClass());
+		InjectionMetadata metadata = findPersistenceMetadata(beanName, bean.getClass(), pvs);
 		try {
 			metadata.inject(bean, beanName, pvs);
 		}
@@ -360,24 +361,27 @@ public class PersistenceAnnotationBeanPostProcessor
 	}
 
 
-	private InjectionMetadata findPersistenceMetadata(String beanName, final Class<?> clazz) {
-		// Quick check on the concurrent map first, with minimal locking.
+	private InjectionMetadata findPersistenceMetadata(String beanName, final Class<?> clazz, PropertyValues pvs) {
 		// Fall back to class name as cache key, for backwards compatibility with custom callers.
 		String cacheKey = (StringUtils.hasLength(beanName) ? beanName : clazz.getName());
+		// Quick check on the concurrent map first, with minimal locking.
 		InjectionMetadata metadata = this.injectionMetadataCache.get(cacheKey);
 		if (InjectionMetadata.needsRefresh(metadata, clazz)) {
 			synchronized (this.injectionMetadataCache) {
 				metadata = this.injectionMetadataCache.get(cacheKey);
 				if (InjectionMetadata.needsRefresh(metadata, clazz)) {
+					if (metadata != null) {
+						metadata.clear(pvs);
+					}
+
 					LinkedList<InjectionMetadata.InjectedElement> elements = new LinkedList<InjectionMetadata.InjectedElement>();
 					Class<?> targetClass = clazz;
 
 					do {
 						LinkedList<InjectionMetadata.InjectedElement> currElements = new LinkedList<InjectionMetadata.InjectedElement>();
 						for (Field field : targetClass.getDeclaredFields()) {
-							PersistenceContext pc = field.getAnnotation(PersistenceContext.class);
-							PersistenceUnit pu = field.getAnnotation(PersistenceUnit.class);
-							if (pc != null || pu != null) {
+							if (field.isAnnotationPresent(PersistenceContext.class) ||
+									field.isAnnotationPresent(PersistenceUnit.class)) {
 								if (Modifier.isStatic(field.getModifiers())) {
 									throw new IllegalStateException("Persistence annotations are not supported on static fields");
 								}
@@ -385,17 +389,17 @@ public class PersistenceAnnotationBeanPostProcessor
 							}
 						}
 						for (Method method : targetClass.getDeclaredMethods()) {
-							PersistenceContext pc = method.getAnnotation(PersistenceContext.class);
-							PersistenceUnit pu = method.getAnnotation(PersistenceUnit.class);
-							if ((pc != null || pu != null) &&
-									method.equals(ClassUtils.getMostSpecificMethod(method, clazz))) {
+							method = BridgeMethodResolver.findBridgedMethod(method);
+							if ((method.isAnnotationPresent(PersistenceContext.class) ||
+									method.isAnnotationPresent(PersistenceUnit.class)) &&
+									method.equals(BridgeMethodResolver.findBridgedMethod(ClassUtils.getMostSpecificMethod(method, clazz)))) {
 								if (Modifier.isStatic(method.getModifiers())) {
 									throw new IllegalStateException("Persistence annotations are not supported on static methods");
 								}
 								if (method.getParameterTypes().length != 1) {
 									throw new IllegalStateException("Persistence annotation requires a single-arg method: " + method);
 								}
-								PropertyDescriptor pd = BeanUtils.findPropertyForMethod(method);
+								PropertyDescriptor pd = BeanUtils.findPropertyForMethod(method, clazz);
 								currElements.add(new PersistenceElement(method, pd));
 							}
 						}
@@ -691,8 +695,8 @@ public class PersistenceAnnotationBeanPostProcessor
 				// Inject a container-managed extended EntityManager.
 				em = ExtendedEntityManagerCreator.createContainerManagedEntityManager(emf, this.properties);
 			}
-			if (em instanceof EntityManagerProxy &&
-					beanFactory != null && !beanFactory.isPrototype(requestingBeanName)) {
+			if (em instanceof EntityManagerProxy && beanFactory != null &&
+					beanFactory.containsBean(requestingBeanName) && !beanFactory.isPrototype(requestingBeanName)) {
 				extendedEntityManagersToClose.put(target, ((EntityManagerProxy) em).getTargetEntityManager());
 			}
 			return em;

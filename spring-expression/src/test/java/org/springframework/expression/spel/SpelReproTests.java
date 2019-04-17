@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2014 the original author or authors.
+ * Copyright 2002-2015 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,6 +19,7 @@ package org.springframework.expression.spel;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -286,6 +287,11 @@ public class SpelReproTests extends ExpressionTestCase {
 	static class MapAccessor implements PropertyAccessor {
 
 		@Override
+		public Class<?>[] getSpecificTargetClasses() {
+			return new Class<?>[] {Map.class};
+		}
+
+		@Override
 		public boolean canRead(EvaluationContext context, Object target, String name) throws AccessException {
 			return (((Map<?, ?>) target).containsKey(name));
 		}
@@ -304,11 +310,6 @@ public class SpelReproTests extends ExpressionTestCase {
 		@SuppressWarnings("unchecked")
 		public void write(EvaluationContext context, Object target, String name, Object newValue) throws AccessException {
 			((Map<String, Object>) target).put(name, newValue);
-		}
-
-		@Override
-		public Class<?>[] getSpecificTargetClasses() {
-			return new Class[] { Map.class };
 		}
 	}
 
@@ -1769,10 +1770,10 @@ public class SpelReproTests extends ExpressionTestCase {
 	public void SPR10486() throws Exception {
 		SpelExpressionParser parser = new SpelExpressionParser();
 		StandardEvaluationContext context = new StandardEvaluationContext();
-		SPR10486 rootObject = new SPR10486();
+		Spr10486 rootObject = new Spr10486();
 		Expression classNameExpression = parser.parseExpression("class.name");
 		Expression nameExpression = parser.parseExpression("name");
-		assertThat(classNameExpression.getValue(context, rootObject), equalTo((Object) SPR10486.class.getName()));
+		assertThat(classNameExpression.getValue(context, rootObject), equalTo((Object) Spr10486.class.getName()));
 		assertThat(nameExpression.getValue(context, rootObject), equalTo((Object) "name"));
 	}
 
@@ -1780,7 +1781,7 @@ public class SpelReproTests extends ExpressionTestCase {
 	public void SPR11142() throws Exception {
 		SpelExpressionParser parser = new SpelExpressionParser();
 		StandardEvaluationContext context = new StandardEvaluationContext();
-		SPR11142 rootObject = new SPR11142();
+		Spr11142 rootObject = new Spr11142();
 		Expression expression = parser.parseExpression("something");
 		thrown.expect(SpelEvaluationException.class);
 		thrown.expectMessage("'something' cannot be found");
@@ -1819,26 +1820,6 @@ public class SpelReproTests extends ExpressionTestCase {
 		assertEquals(1, expr.getValue(context));
 	}
 
-
-	static class Spr11445Class implements BeanResolver {
-
-		private final AtomicInteger counter = new AtomicInteger();
-
-		public int echo(int invocation) {
-			return invocation;
-		}
-
-		public int parameter() {
-			return counter.incrementAndGet();
-		}
-
-		@Override
-		public Object resolve(EvaluationContext context, String beanName) throws AccessException {
-			return beanName.equals("bean") ? this : null;
-		}
-	}
-
-
 	@Test
 	public void SPR11494() {
 		Expression exp = new SpelExpressionParser().parseExpression("T(java.util.Arrays).asList('a','b')");
@@ -1846,10 +1827,46 @@ public class SpelReproTests extends ExpressionTestCase {
 		assertThat(list.size(), is(2));
 	}
 
+	@Test
+	public void SPR11609() {
+		StandardEvaluationContext sec = new StandardEvaluationContext();
+		sec.addPropertyAccessor(new MapAccessor());
+		Expression exp = new SpelExpressionParser().parseExpression(
+				"T(org.springframework.expression.spel.SpelReproTests$MapWithConstant).X");
+		assertEquals(1, exp.getValue(sec));
+	}
 
-	private static enum ABC { A, B, C }
+	@Test
+	public void SPR12502() {
+		SpelExpressionParser parser = new SpelExpressionParser();
+		Expression expression = parser.parseExpression("#root.getClass().getName()");
+		assertEquals(UnnamedUser.class.getName(), expression.getValue(new UnnamedUser()));
+		assertEquals(NamedUser.class.getName(), expression.getValue(new NamedUser()));
+	}
 
-	private static enum XYZ { X, Y, Z }
+	@Test
+	public void SPR12803() {
+		StandardEvaluationContext sec = new StandardEvaluationContext();
+		sec.setVariable("iterable", Collections.emptyList());
+		SpelExpressionParser parser = new SpelExpressionParser();
+		Expression expression = parser.parseExpression("T(org.springframework.expression.spel.SpelReproTests.GuavaLists).newArrayList(#iterable)");
+		assertTrue(expression.getValue(sec) instanceof ArrayList);
+	}
+
+	@Test
+	public void SPR13918() {
+		EvaluationContext context = new StandardEvaluationContext();
+		context.setVariable("encoding", "UTF-8");
+
+		Expression ex = parser.parseExpression("T(java.nio.charset.Charset).forName(#encoding)");
+		Object result = ex.getValue(context);
+		assertEquals(Charset.forName("UTF-8"), result);
+	}
+
+
+	private enum ABC { A, B, C }
+
+	private enum XYZ { X, Y, Z }
 
 
 	public static class BooleanHolder {
@@ -1858,25 +1875,25 @@ public class SpelReproTests extends ExpressionTestCase {
 
 		private boolean primitiveProperty = true;
 
-		public Boolean isSimpleProperty() {
-			return simpleProperty;
-		}
-
 		public void setSimpleProperty(Boolean simpleProperty) {
 			this.simpleProperty = simpleProperty;
 		}
 
-		public boolean isPrimitiveProperty() {
-			return primitiveProperty;
+		public Boolean isSimpleProperty() {
+			return this.simpleProperty;
 		}
 
 		public void setPrimitiveProperty(boolean primitiveProperty) {
 			this.primitiveProperty = primitiveProperty;
 		}
+
+		public boolean isPrimitiveProperty() {
+			return this.primitiveProperty;
+		}
 	}
 
 
-	private static interface GenericInterface<T extends Number> {
+	private interface GenericInterface<T extends Number> {
 
 		public T getProperty();
 	}
@@ -1903,9 +1920,9 @@ public class SpelReproTests extends ExpressionTestCase {
 	}
 
 
-	public static interface StaticFinal {
+	public interface StaticFinal {
 
-		public static final String VALUE = "interfaceValue";
+		String VALUE = "interfaceValue";
 	}
 
 
@@ -1921,21 +1938,21 @@ public class SpelReproTests extends ExpressionTestCase {
 	}
 
 
-	public static class SPR10486 {
+	public static class Spr10486 {
 
 		private String name = "name";
-
-		public String getName() {
-			return name;
-		}
 
 		public void setName(String name) {
 			this.name = name;
 		}
+
+		public String getName() {
+			return this.name;
+		}
 	}
 
 
-	static class SPR11142 {
+	static class Spr11142 {
 
 		public String isSomething() {
 			return "";
@@ -1943,25 +1960,72 @@ public class SpelReproTests extends ExpressionTestCase {
 	}
 
 
-	static class TestClass2 { // SPR-9194
+	static class TestClass2 {  // SPR-9194
 
 		String string;
-
 
 		public TestClass2(String string) {
 			this.string = string;
 		}
 
-		@Override
-		public int hashCode() {
-			return 0;
+		public boolean equals(Object other) {
+			return (this == other || (other instanceof TestClass2 &&
+					this.string.equals(((TestClass2) other).string)));
 		}
 
-		public boolean equals(Object o) {
-			if (o instanceof TestClass2) {
-				return string.equals(((TestClass2) o).string);
-			}
-			return false;
+		@Override
+		public int hashCode() {
+			return this.string.hashCode();
+		}
+	}
+
+
+	static class Spr11445Class implements BeanResolver {
+
+		private final AtomicInteger counter = new AtomicInteger();
+
+		public int echo(int invocation) {
+			return invocation;
+		}
+
+		public int parameter() {
+			return this.counter.incrementAndGet();
+		}
+
+		@Override
+		public Object resolve(EvaluationContext context, String beanName) throws AccessException {
+			return (beanName.equals("bean") ? this : null);
+		}
+	}
+
+
+	@SuppressWarnings({"rawtypes", "serial"})
+	public static class MapWithConstant extends HashMap {
+
+		public static final int X = 1;
+	}
+
+
+	public static class UnnamedUser {
+	}
+
+
+	public static class NamedUser {
+
+		public String getName() {
+			return "foo";
+		}
+	}
+
+
+	public static class GuavaLists {
+
+		public static <T> List<T> newArrayList(Iterable<T> iterable) {
+			return new ArrayList<T>();
+		}
+
+		public static <T> List<T> newArrayList(Object... elements) {
+			throw new UnsupportedOperationException();
 		}
 	}
 

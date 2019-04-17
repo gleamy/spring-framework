@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2012 the original author or authors.
+ * Copyright 2002-2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,11 +27,11 @@ import org.springframework.util.ObjectUtils;
  * HttpHeaders headers = new HttpHeaders();
  * headers.setContentType(MediaType.TEXT_PLAIN);
  * HttpEntity&lt;String&gt; entity = new HttpEntity&lt;String&gt;(helloWorld, headers);
- * URI location = template.postForLocation("http://example.com", entity);
+ * URI location = template.postForLocation("https://example.com", entity);
  * </pre>
  * or
  * <pre class="code">
- * HttpEntity&lt;String&gt; entity = template.getForEntity("http://example.com", String.class);
+ * HttpEntity&lt;String&gt; entity = template.getForEntity("https://example.com", String.class);
  * String body = entity.getBody();
  * MediaType contentType = entity.getHeaders().getContentType();
  * </pre>
@@ -138,20 +138,20 @@ public class HttpEntity<T> {
 
 	@Override
 	public int hashCode() {
-		return ObjectUtils.nullSafeHashCode(this.headers) * 29 + ObjectUtils.nullSafeHashCode(this.body);
+		return (ObjectUtils.nullSafeHashCode(this.headers) * 29 + ObjectUtils.nullSafeHashCode(this.body));
 	}
 
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder("<");
-		if (body != null) {
-			builder.append(body);
-			if (headers != null) {
+		if (this.body != null) {
+			builder.append(this.body);
+			if (this.headers != null) {
 				builder.append(',');
 			}
 		}
-		if (headers != null) {
-			builder.append(headers);
+		if (this.headers != null) {
+			builder.append(this.headers);
 		}
 		builder.append('>');
 		return builder.toString();
