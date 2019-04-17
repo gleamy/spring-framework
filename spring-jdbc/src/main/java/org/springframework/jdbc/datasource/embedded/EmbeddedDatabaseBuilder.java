@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2014 the original author or authors.
+ * Copyright 2002-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,6 +21,7 @@ import javax.sql.DataSource;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
+import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.util.Assert;
 
 /**
@@ -29,6 +30,7 @@ import org.springframework.util.Assert;
  * <h3>Usage Example</h3>
  * <pre class="code">
  * EmbeddedDatabase db = new EmbeddedDatabaseBuilder()
+ *     .generateUniqueName(true)
  *     .setType(H2)
  *     .setScriptEncoding("UTF-8")
  *     .ignoreFailedDrops(true)
@@ -36,7 +38,7 @@ import org.springframework.util.Assert;
  *     .addScripts("user_data.sql", "country_data.sql")
  *     .build();
  *
- * // ...
+ * // perform actions against the db (EmbeddedDatabase extends javax.sql.DataSource)
  *
  * db.shutdown();
  * </pre>
@@ -78,11 +80,31 @@ public class EmbeddedDatabaseBuilder {
 	}
 
 	/**
+	 * Specify whether a unique ID should be generated and used as the database name.
+	 * <p>If the configuration for this builder is reused across multiple
+	 * application contexts within a single JVM, this flag should be <em>enabled</em>
+	 * (i.e., set to {@code true}) in order to ensure that each application context
+	 * gets its own embedded database.
+	 * <p>Enabling this flag overrides any explicit name set via {@link #setName}.
+	 * @param flag {@code true} if a unique database name should be generated
+	 * @return {@code this}, to facilitate method chaining
+	 * @since 4.2
+	 * @see #setName
+	 */
+	public EmbeddedDatabaseBuilder generateUniqueName(boolean flag) {
+		this.databaseFactory.setGenerateUniqueDatabaseName(flag);
+		return this;
+	}
+
+	/**
 	 * Set the name of the embedded database.
 	 * <p>Defaults to {@link EmbeddedDatabaseFactory#DEFAULT_DATABASE_NAME} if
 	 * not called.
+	 * <p>Will be overridden if the {@code generateUniqueName} flag has been
+	 * set to {@code true}.
 	 * @param databaseName the name of the embedded database to build
 	 * @return {@code this}, to facilitate method chaining
+	 * @see #generateUniqueName
 	 */
 	public EmbeddedDatabaseBuilder setName(String databaseName) {
 		this.databaseFactory.setDatabaseName(databaseName);
@@ -161,7 +183,9 @@ public class EmbeddedDatabaseBuilder {
 
 	/**
 	 * Specify the statement separator used in all SQL scripts, if a custom one.
-	 * <p>Default is ";".
+	 * <p>Defaults to {@code ";"} if not specified and falls back to {@code "\n"}
+	 * as a last resort; may be set to {@link ScriptUtils#EOF_STATEMENT_SEPARATOR}
+	 * to signal that each script contains a single statement without a separator.
 	 * @param separator the statement separator
 	 * @return {@code this}, to facilitate method chaining
 	 * @since 4.0.3
@@ -173,7 +197,7 @@ public class EmbeddedDatabaseBuilder {
 
 	/**
 	 * Specify the single-line comment prefix used in all SQL scripts.
-	 * <p>Default is "--".
+	 * <p>Defaults to {@code "--"}.
 	 * @param commentPrefix the prefix for single-line comments
 	 * @return {@code this}, to facilitate method chaining
 	 * @since 4.0.3
@@ -185,12 +209,11 @@ public class EmbeddedDatabaseBuilder {
 
 	/**
 	 * Specify the start delimiter for block comments in all SQL scripts.
-	 * <p>Default is "/*".
+	 * <p>Defaults to {@code "/*"}.
 	 * @param blockCommentStartDelimiter the start delimiter for block comments
 	 * @return {@code this}, to facilitate method chaining
 	 * @since 4.0.3
 	 * @see #setBlockCommentEndDelimiter
-	 * @since 4.0.3
 	 */
 	public EmbeddedDatabaseBuilder setBlockCommentStartDelimiter(String blockCommentStartDelimiter) {
 		this.databasePopulator.setBlockCommentStartDelimiter(blockCommentStartDelimiter);
@@ -199,12 +222,11 @@ public class EmbeddedDatabaseBuilder {
 
 	/**
 	 * Specify the end delimiter for block comments in all SQL scripts.
-	 * <p>Default is "*&#47;".
+	 * <p>Defaults to <code>"*&#47;"</code>.
 	 * @param blockCommentEndDelimiter the end delimiter for block comments
 	 * @return {@code this}, to facilitate method chaining
 	 * @since 4.0.3
 	 * @see #setBlockCommentStartDelimiter
-	 * @since 4.0.3
 	 */
 	public EmbeddedDatabaseBuilder setBlockCommentEndDelimiter(String blockCommentEndDelimiter) {
 		this.databasePopulator.setBlockCommentEndDelimiter(blockCommentEndDelimiter);

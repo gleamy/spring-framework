@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2014 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,77 +17,61 @@
 package org.springframework.messaging.handler.annotation.support;
 
 import org.springframework.core.MethodParameter;
+import org.springframework.lang.Nullable;
 import org.springframework.messaging.Message;
-import org.springframework.messaging.MessagingException;
+import org.springframework.messaging.handler.invocation.MethodArgumentResolutionException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
 
 /**
- * Exception to be thrown when a method argument is not valid. For instance, this
- * can be issued if a validation on a method parameter annotated with
- * {@code @Valid} fails.
+ * Exception to be thrown when a method argument fails validation perhaps as a
+ * result of {@code @Valid} style validation, or perhaps because it is required.
  *
  * @author Brian Clozel
+ * @author Rossen Stoyanchev
  * @since 4.0.1
  */
 @SuppressWarnings("serial")
-public class MethodArgumentNotValidException extends MessagingException {
+public class MethodArgumentNotValidException extends MethodArgumentResolutionException {
 
-	private final MethodParameter parameter;
-
+	@Nullable
 	private final BindingResult bindingResult;
 
 
 	/**
 	 * Create a new instance with the invalid {@code MethodParameter}.
 	 */
-
 	public MethodArgumentNotValidException(Message<?> message, MethodParameter parameter) {
-		this(message, parameter, null);
+		super(message, parameter);
+		this.bindingResult = null;
 	}
 
 	/**
 	 * Create a new instance with the invalid {@code MethodParameter} and a
 	 * {@link org.springframework.validation.BindingResult}.
 	 */
-	public MethodArgumentNotValidException(Message<?> message, MethodParameter parameter,
-			BindingResult bindingResult) {
-
-		super(message, generateMessage(parameter, bindingResult));
-		this.parameter = parameter;
+	public MethodArgumentNotValidException(Message<?> message, MethodParameter parameter, BindingResult bindingResult) {
+		super(message, parameter, getValidationErrorMessage(bindingResult));
 		this.bindingResult = bindingResult;
 	}
 
 
 	/**
-	 * Return the MethodParameter that was rejected.
+	 * Return the BindingResult if the failure is validation-related,
+	 * or {@code null} if none.
 	 */
-	public MethodParameter getMethodParameter() {
-		return this.parameter;
-	}
-
-	/**
-	 * Return the BindingResult if the failure is validation-related or {@code null}.
-	 */
-	public BindingResult getBindingResult() {
+	@Nullable
+	public final BindingResult getBindingResult() {
 		return this.bindingResult;
 	}
 
 
-	private static String generateMessage(MethodParameter parameter, BindingResult bindingResult) {
-
-		StringBuilder sb = new StringBuilder("Invalid parameter at index ")
-				.append(parameter.getParameterIndex()).append(" in method: ")
-				.append(parameter.getMethod().toGenericString());
-
-
-		if (bindingResult != null) {
-			sb.append(", with ").append(bindingResult.getErrorCount()).append(" error(s): ");
-			for (ObjectError error : bindingResult.getAllErrors()) {
-				sb.append("[").append(error).append("] ");
-			}
+	private static String getValidationErrorMessage(BindingResult bindingResult) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(bindingResult.getErrorCount()).append(" error(s): ");
+		for (ObjectError error : bindingResult.getAllErrors()) {
+			sb.append("[").append(error).append("] ");
 		}
-
 		return sb.toString();
 	}
 

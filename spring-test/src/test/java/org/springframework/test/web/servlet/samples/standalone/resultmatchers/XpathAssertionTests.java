@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2012 the original author or authors.
+ * Copyright 2002-2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,7 +20,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -29,6 +28,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 import org.junit.Before;
 import org.junit.Test;
+
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.test.web.Person;
@@ -46,23 +46,23 @@ import static org.springframework.web.bind.annotation.RequestMethod.*;
  * Examples of expectations on XML response content with XPath expressions.
  *
  * @author Rossen Stoyanchev
- *
+ * @author Sam Brannen
  * @see ContentAssertionTests
  * @see XmlContentAssertionTests
  */
 public class XpathAssertionTests {
 
 	private static final Map<String, String> musicNamespace =
-		Collections.singletonMap("ns", "http://example.org/music/people");
+		Collections.singletonMap("ns", "https://example.org/music/people");
 
 	private MockMvc mockMvc;
 
 	@Before
 	public void setup() throws Exception {
 		this.mockMvc = standaloneSetup(new MusicController())
-				.defaultRequest(get("/").accept(MediaType.APPLICATION_XML))
+				.defaultRequest(get("/").accept(MediaType.APPLICATION_XML, MediaType.parseMediaType("application/xml;charset=UTF-8")))
 				.alwaysExpect(status().isOk())
-				.alwaysExpect(content().contentType(MediaType.APPLICATION_XML))
+				.alwaysExpect(content().contentType(MediaType.parseMediaType("application/xml;charset=UTF-8")))
 				.build();
 	}
 
@@ -158,9 +158,9 @@ public class XpathAssertionTests {
 		standaloneSetup(new BlogFeedController()).build()
 			.perform(get("/blog.atom").accept(MediaType.APPLICATION_ATOM_XML))
 				.andExpect(status().isOk())
-				.andExpect(content().contentType(MediaType.APPLICATION_ATOM_XML))
+				.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_ATOM_XML))
 				.andExpect(xpath("//feed/title").string("Test Feed"))
-				.andExpect(xpath("//feed/icon").string("http://www.example.com/favicon.ico"));
+				.andExpect(xpath("//feed/icon").string("https://www.example.com/favicon.ico"));
 	}
 
 
@@ -185,7 +185,7 @@ public class XpathAssertionTests {
 	}
 
 	@SuppressWarnings("unused")
-	@XmlRootElement(name="people", namespace="http://example.org/music/people")
+	@XmlRootElement(name="people", namespace="https://example.org/music/people")
 	@XmlAccessorType(XmlAccessType.FIELD)
 	private static class PeopleWrapper {
 
@@ -224,7 +224,7 @@ public class XpathAssertionTests {
 			return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n"
 					+ "<feed xmlns=\"http://www.w3.org/2005/Atom\">\r\n"
 					+ "  <title>Test Feed</title>\r\n"
-					+ "  <icon>http://www.example.com/favicon.ico</icon>\r\n"
+					+ "  <icon>https://www.example.com/favicon.ico</icon>\r\n"
 					+ "</feed>\r\n\r\n";
 		}
 	}

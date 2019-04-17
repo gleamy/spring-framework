@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2014 the original author or authors.
+ * Copyright 2002-2012 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,10 +18,10 @@ package org.springframework.web.servlet.mvc.condition;
 
 import java.util.Arrays;
 import java.util.List;
-
 import javax.servlet.http.HttpServletRequest;
 
 import org.junit.Test;
+
 import org.springframework.mock.web.test.MockHttpServletRequest;
 
 import static org.junit.Assert.*;
@@ -115,29 +115,7 @@ public class PatternsRequestConditionTests {
 		assertEquals("/{foo}", match.getPatterns().iterator().next());
 	}
 
-	// SPR-11532
-
-	@Test
-	public void matchSuffixPatternWithUriVariables() {
-		testSuffixPattern("/employees/{areaOfResponsibility.owner.id}", "/employees/976685.json", false);
-		testSuffixPattern("/establishments/{establishmentId}", "/establishments/123456789.json", false);
-		testSuffixPattern("/a.b/c", "/a.b/c.json", false);
-		testSuffixPattern("/a/b.json", "/a/b.json", true);
-		testSuffixPattern("/a/{b}.{c}", "/a/b.c", true);
-	}
-
-	public void testSuffixPattern(String pattern, String url, boolean patternHasSuffix) {
-		MockHttpServletRequest request = new MockHttpServletRequest("GET", url);
-		PatternsRequestCondition condition = new PatternsRequestCondition(pattern);
-		PatternsRequestCondition match = condition.getMatchingCondition(request);
-
-		assertNotNull(match);
-		assertEquals((patternHasSuffix ? pattern : pattern + ".*"), match.getPatterns().iterator().next());
-	}
-
-	// SPR-8410
-
-	@Test
+	@Test // SPR-8410
 	public void matchSuffixPatternUsingFileExtensions() {
 		String[] patterns = new String[] {"/jobs/{jobName}"};
 		List<String> extensions = Arrays.asList("json");
@@ -201,6 +179,19 @@ public class PatternsRequestConditionTests {
 		PatternsRequestCondition match = condition.getMatchingCondition(new MockHttpServletRequest("GET", "/foo.html"));
 
 		assertNull(match);
+	}
+
+	@Test // gh-22543
+	public void matchWithEmptyPatterns() {
+		PatternsRequestCondition condition = new PatternsRequestCondition();
+		assertEquals(new PatternsRequestCondition(""), condition);
+		assertNotNull(condition.getMatchingCondition(new MockHttpServletRequest("GET", "")));
+		assertNull(condition.getMatchingCondition(new MockHttpServletRequest("GET", "/anything")));
+
+		condition = condition.combine(new PatternsRequestCondition());
+		assertEquals(new PatternsRequestCondition(""), condition);
+		assertNotNull(condition.getMatchingCondition(new MockHttpServletRequest("GET", "")));
+		assertNull(condition.getMatchingCondition(new MockHttpServletRequest("GET", "/anything")));
 	}
 
 	@Test
